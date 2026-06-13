@@ -31,7 +31,7 @@ def column_filled(alpha, x, h, thresh):
 def find_runs(im, alpha_thresh, min_gap):
     """Вернуть список (x0, x1) непрозрачных колонок-фигур."""
     w, h = im.size
-    px = im.load()
+    px = im.getchannel("A").load()
     filled = [column_filled(px, x, h, alpha_thresh) for x in range(w)]
     runs, start, gap = [], None, 0
     for x in range(w):
