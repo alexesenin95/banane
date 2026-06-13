@@ -6,6 +6,18 @@ const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/por
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
 const PW=109, PHH=62;
+/* ---- персонажи (выбор героя) ---- */
+const HEROES={
+  mono:{name:'Обезьянка Бана', desc:'Прежний герой — компактный и быстрый.',
+        idle:'p_idle', run:['p_run1','p_run2','p_run3'], jump:'p_jump', attack:'p_attack', files:null},
+  orang:{name:'Орангутан', desc:'Эффектная анимация: бег, прыжок, удар.',
+        idle:'h2_idle', run:['h2_run1','h2_run2','h2_run3'], jump:'h2_jump', attack:'h2_attack',
+        files:{h2_idle:'assets/sprites/h2_idle.webp', h2_run1:'assets/sprites/h2_run1.webp',
+               h2_run2:'assets/sprites/h2_run2.webp', h2_run3:'assets/sprites/h2_run3.webp',
+               h2_jump:'assets/sprites/h2_jump.webp', h2_attack:'assets/sprites/h2_attack.webp'}}
+};
+let selectedHero='mono';
+const HK=()=>HEROES[selectedHero];
 const ADMIN=true;                 // dev-only level switching; set false for players
 const STOMP_DMG=3;
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
@@ -45,7 +57,23 @@ function renderStory(){const [spk,txt]=STORY[storyI];
   if(psrc){img.src=psrc;img.style.display='block';img.style.animation='none';void img.offsetWidth;img.style.animation='';}else img.style.display='none';
   document.getElementById('introNext').textContent=(storyI>=STORY.length-1)?'К оружию →':'Дальше →';}
 function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialogue');return;}renderStory();}
-document.getElementById('startBtn').onclick=()=>{hide('title');startStory();};
+/* ---- выбор персонажа ---- */
+function startCharSelect(){ show('charselect'); probeHero2(); }
+function probeHero2(){ const card=document.getElementById('chooseOrang'); if(!card)return;
+  const im=new Image();
+  im.onload=()=>{ card.classList.remove('locked'); card.dataset.ready='1';
+    const pic=document.getElementById('orangImg'); if(pic)pic.src=HEROES.orang.files.h2_idle;
+    const perk=document.getElementById('orangPerk'); if(perk)perk.textContent=HEROES.orang.desc; };
+  im.onerror=()=>{ card.classList.add('locked'); card.dataset.ready='';
+    const perk=document.getElementById('orangPerk'); if(perk)perk.textContent='Появится после добавления спрайта (assets/sprites/h2_*)'; };
+  im.src=HEROES.orang.files.h2_idle+'?_='+Date.now(); }
+function pickHero(h){ if(h==='orang' && !document.getElementById('chooseOrang').dataset.ready)return;
+  selectedHero=h; hide('charselect'); startStory(); }
+document.getElementById('startBtn').onclick=()=>{hide('title');startCharSelect();};
+document.getElementById('chooseMono').onclick=()=>pickHero('mono');
+document.getElementById('chooseOrang').onclick=()=>pickHero('orang');
+['chooseMono','chooseOrang'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById(id).click();}}));
 document.getElementById('introNext').onclick=nextStory;
 document.getElementById('introSkip').onclick=()=>{hide('intro');show('dialogue');};
 function pick(w){chosenWeapon=w;currentWeapon=w;hide('dialogue');startGame(w);}
@@ -146,8 +174,11 @@ function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a
 function startInstance(){ paused=false; pauseReason=null; game=new Phaser.Game(makeConfig()); }
 function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0;
   upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startInstance(); }
-function preload(){ for(const k in TEX) this.load.image(k,TEX[k]); }
-function setSt(p,s){ if(p._st===s)return; p._st=s; if(s==='run')p.anims.play('run',true); else {p.anims.stop(); p.setTexture(s==='jump'?'p_jump':'p_idle');} }
+function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
+  const hf=HK().files; if(hf) for(const k in hf) this.load.image(k,hf[k]);
+  this.load.on('loaderror',()=>{ selectedHero='mono'; }); }   // нет спрайта героя — откат на моно
+function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
+  if(s==='run')p.anims.play('run_'+selectedHero,true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);} }
 function updateWeaponHUD(scene){ if(!scene.whl)return;
   scene.whl.x=currentWeapon==='boomerang'?728:762;
   scene.wIcons.boomerang.setAlpha(currentWeapon==='boomerang'?1:0.45);
@@ -176,17 +207,19 @@ function create(){
   this.bgMid=this.add.tileSprite(400,225,800,450,'bg_mid').setScrollFactor(0).setDepth(-4).setTint(dim);
   this.bgFront=this.add.tileSprite(400,225,800,450,'bg_front').setScrollFactor(0).setDepth(-3).setTint(dim);
   this.add.rectangle(400,225,800,450,0x0a1410,0.16).setScrollFactor(0).setDepth(-2);
-  if(!this.anims.exists('run')){
-    this.anims.create({key:'run',frames:[{key:'p_run1'},{key:'p_run2'},{key:'p_run3'}],frameRate:9,repeat:-1});
+  if(!this.anims.exists('run_'+selectedHero)){
+    this.anims.create({key:'run_'+selectedHero,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
+  if(!this.anims.exists('swim')){
     this.anims.create({key:'swim',frames:[{key:'s1'},{key:'s2'}],frameRate:5,repeat:-1});
     this.anims.create({key:'orcwalk',frames:[{key:'orc1'},{key:'orc2'}],frameRate:6,repeat:-1}); }
   this.platforms=this.physics.add.staticGroup();
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,'tile'); }
   cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],'tile'); });
 
-  this.player=this.physics.add.sprite(80,300,'p_idle'); this.player._st=null; this.player.invuln=false; this.player.armor=false;
+  this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
-  this.player.body.setSize(PW*0.3,PHH*0.8).setOffset(PW*0.35,PHH*0.2);
+  const pw=this.player.width||PW, ph=this.player.height||PHH;
+  this.player.body.setSize(pw*0.3,ph*0.8).setOffset(pw*0.35,ph*0.2);
   this.physics.add.collider(this.player,this.platforms);
   this.cpX=80;
 
@@ -320,7 +353,7 @@ function doAttack(scene){
   const p=scene.player,dir=p.flipX?-1:1, dmg=WEAPONS[currentWeapon].dmg;
   if(currentWeapon==='boomerang'){ const pr=scene.projs.create(p.x+dir*22,p.y-6,'proj'); pr.body.setAllowGravity(false);
     pr.setVelocityX(dir*400); pr.setAngularVelocity(760); pr.setDepth(5); pr.born=now; }
-  else { p.setTexture('p_attack'); p._st='attack'; scene.time.delayedCall(240,()=>{ if(p.active)p._st=null; });
+  else { p.setTexture(HK().attack); p._st='attack'; scene.time.delayedCall(240,()=>{ if(p.active)p._st=null; });
     const slash=scene.add.ellipse(p.x+dir*42,p.y-4,64,52,0xffffff,0.55).setDepth(6);
     scene.tweens.add({targets:slash,alpha:0,scaleX:1.5,scaleY:1.5,duration:200,onComplete:()=>slash.destroy()});
     const range=76;
