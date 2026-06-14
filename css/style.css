@@ -38,3 +38,8 @@
   .invCard .nm{font-size:10.5px;margin-top:5px;line-height:1.15}
   .invCard .lk{font-size:22px;height:40px;display:flex;align-items:center}
   .hintbar{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12px;color:rgba(255,255,255,.6)}
+  #cinematic{padding:0;background:#000;overflow:hidden;cursor:pointer}
+  #cineImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
+  #cineText{position:absolute;left:0;right:0;bottom:60px;margin:0;padding:0 26px;z-index:2;color:#fff;font-size:clamp(15px,2.6vw,21px);line-height:1.45;text-shadow:0 2px 8px #000,0 0 22px #000;max-width:none}
+  #cineNext{position:absolute;bottom:14px;right:16px;z-index:2}
+  @keyframes kenburns{from{transform:scale(1.13) translate(2%,-1%)}to{transform:scale(1) translate(-2%,1%)}}

@@ -2,6 +2,15 @@
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
 const TEX = {"p_idle": "assets/sprites/p_idle.webp", "p_run1": "assets/sprites/p_run1.webp", "p_run2": "assets/sprites/p_run2.webp", "p_run3": "assets/sprites/p_run3.webp", "p_jump": "assets/sprites/p_jump.webp", "p_attack": "assets/sprites/p_attack.webp", "s1": "assets/sprites/s1.webp", "s2": "assets/sprites/s2.webp", "orc1": "assets/sprites/orc1.webp", "orc2": "assets/sprites/orc2.webp", "orc3": "assets/sprites/orc3.webp", "spider": "assets/sprites/spider.webp", "proj": "assets/sprites/proj.webp", "banana": "assets/sprites/banana.webp", "flag": "assets/sprites/flag.webp", "tile": "assets/sprites/tile.webp", "bg_far": "assets/bg/bg_far.webp", "bg_mid": "assets/bg/bg_mid.webp", "bg_front": "assets/bg/bg_front.webp", "k_thrower": "assets/sprites/k_thrower.webp", "k_archer": "assets/sprites/k_archer.webp", "k_shield": "assets/sprites/k_shield.webp", "k_berserk": "assets/sprites/k_berserk.webp", "e_knife": "assets/sprites/e_knife.webp", "e_arrow": "assets/sprites/e_arrow.webp", "b_spikes": "assets/sprites/b_spikes.webp", "b_thorn": "assets/sprites/b_thorn.webp", "b_stone": "assets/sprites/b_stone.webp", "b_palisade": "assets/sprites/b_palisade.webp", "b_gate": "assets/sprites/b_gate.webp", "wi_boom2": "assets/sprites/wi_boom2.webp", "wi_club2": "assets/sprites/wi_club2.webp", "wi_boom": "assets/sprites/wi_boom.webp", "wi_club": "assets/sprites/wi_club.webp"};
+Object.assign(TEX,{
+  swamp_far:'assets/bg/swamp_far.webp', swamp_mid:'assets/bg/swamp_mid.webp', swamp_front:'assets/bg/swamp_front.webp',
+  tile_swamp:'assets/sprites/tile_swamp.webp',
+  b_spikes_swamp:'assets/sprites/b_spikes_swamp.webp', b_thorn_swamp:'assets/sprites/b_thorn_swamp.webp',
+  b_stone_swamp:'assets/sprites/b_stone_swamp.webp', b_palisade_swamp:'assets/sprites/b_palisade_swamp.webp',
+  b_gate_swamp:'assets/sprites/b_gate_swamp.webp',
+  t_club:'assets/sprites/t_club.webp', t_bone:'assets/sprites/t_bone.webp', t_boulder:'assets/sprites/t_boulder.webp',
+  boss_troll:'assets/sprites/boss_troll.webp', boulder:'assets/sprites/boulder.webp'
+});
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
@@ -112,6 +121,22 @@ function advanceCut(){ cutI++; if(cutI>=cutLines.length){ hide('cutscene'); paus
   if(activeScene){ activeScene.physics.resume(); if(currentCut&&currentCut.spawn) spawnSquad(activeScene,currentCut.spawn);} return;} renderCut(); }
 document.getElementById('cutscene').onclick=advanceCut;
 
+/* ---- кино-панели (драматичное интро этапа) ---- */
+const CINEMATICS={ 3:{ panels:['assets/cutscenes/c4_1.webp','assets/cutscenes/c4_2.webp','assets/cutscenes/c4_3.webp','assets/cutscenes/c4_4.webp'],
+  texts:['Долина животных цвела под банановым солнцем…',
+         '…пока не пришли орки. Огонь и дым поглотили деревню зверей.',
+         'Выжженная земля захлебнулась гнилью — джунгли стали ядовитой топью.',
+         'Но герой ещё стоит на краю болот. За Долину — вперёд!'] } };
+let playedCine={}, cineQ=[], cineTexts=[], cineI=0, cineCb=null;
+function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
+function renderCine(){ const img=document.getElementById('cineImg'); img.src=cineQ[cineI];
+  img.style.animation='none'; void img.offsetWidth; img.style.animation='kenburns 7s ease-out forwards';
+  document.getElementById('cineText').textContent=cineTexts[cineI]||'';
+  document.getElementById('cineNext').textContent=(cineI>=cineQ.length-1)?'В бой →':'Дальше →'; }
+function advanceCine(){ cineI++; if(cineI>=cineQ.length){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); return; } renderCine(); }
+document.getElementById('cinematic').onclick=advanceCine;
+function startLevelFlow(){ const def=CINEMATICS[currentLevel]; if(def&&!playedCine[currentLevel]){ playedCine[currentLevel]=true; playCinematic(def,startInstance); } else startInstance(); }
+
 let endAction='restart';
 function endScreenG(title,s,btn,action){ document.getElementById('endTitle').textContent=title;
   document.getElementById('endScore').textContent='Очки: '+s; document.getElementById('endBtn').textContent=btn; endAction=action; show('endScreen'); }
@@ -119,15 +144,40 @@ window.levelClear=n=>endScreenG('Уровень '+n+' пройден!',score,'Д
 window.showWin=()=>endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart');
 window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');
 document.getElementById('endBtn').onclick=()=>{ hide('endScreen'); if(game){game.destroy(true);game=null;}
-  if(endAction==='next'){ currentLevel++; gameOver=false; startInstance(); } else startGame(chosenWeapon); };
+  if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
 
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-const META=[{worldW:20000,theme:'shrimp',boss:false},{worldW:22000,theme:'mix',boss:false},{worldW:20000,theme:'boss',boss:true}];
-function pickType(theme,R){ const r=R();
-  if(theme==='shrimp'){ if(r<0.68)return'shrimp'; if(r<0.9)return'orc'; return'thrower'; }
-  if(theme==='mix'){ if(r<0.2)return'shrimp'; if(r<0.48)return'orc'; if(r<0.64)return'thrower'; if(r<0.82)return'archer'; return'shield'; }
-  if(r<0.4)return'orc'; if(r<0.62)return'berserk'; if(r<0.82)return'archer'; return'shield';
-}
+/* ---- биомы: своя графика/враги/босс на группу уровней ----
+   ref = временно переиспользовать арт другого биома, пока нет своего (cave/ice/sky). */
+const BIOMES={
+  jungle:{far:'bg_far',mid:'bg_mid',front:'bg_front',tile:'tile',
+    obst:{spikes:'b_spikes',thorn:'b_thorn',stone:'b_stone',palisade:'b_palisade',gate:'b_gate'},
+    boss:'spider',bossName:'ПАУК-СТРАЖ',tint:0xa6abb5,sky:0x0a1410},
+  swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',
+    obst:{spikes:'b_spikes_swamp',thorn:'b_thorn_swamp',stone:'b_stone_swamp',palisade:'b_palisade_swamp',gate:'b_gate_swamp'},
+    boss:'boss_troll',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
+  cave:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0x8a90a8,sky:0x0a0a16},
+  ice:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xc2d6e6,sky:0x14283a},
+  sky:{ref:'jungle',boss:'boss_troll',bossName:'ВОЕНАЧАЛЬНИК',tint:0xdfe7f2,sky:0x18263e}
+};
+function vis(name){ const b=BIOMES[name]; return b.far?b:BIOMES[b.ref]; }   // источник текстур
+const POOLS={
+  jshrimp:[['shrimp',68],['orc',22],['thrower',10]],
+  jmix:[['shrimp',18],['orc',28],['thrower',16],['archer',18],['shield',20]],
+  jheavy:[['orc',38],['berserk',22],['archer',20],['shield',20]],
+  swamp:[['orc',22],['thrower',13],['archer',10],['troll_club',16],['troll_bone',13],['troll_boulder',9],['berserk',17]]
+};
+function pickType(poolName,R){ const pool=POOLS[poolName]||POOLS.swamp; let tot=0; for(const x of pool)tot+=x[1];
+  let r=R()*tot; for(const x of pool){ r-=x[1]; if(r<0)return x[0]; } return pool[0][0]; }
+const GROUPS=[
+  {biome:'jungle',pools:['jshrimp','jmix','jheavy']},                 // ур. 1-3
+  {biome:'swamp', pools:['swamp','swamp','swamp','swamp']},           // ур. 4-7
+  {biome:'cave',  pools:['swamp','swamp','swamp','swamp','swamp']},   // ур. 8-12
+  {biome:'ice',   pools:['swamp','swamp','swamp','swamp']},           // ур. 13-16
+  {biome:'sky',   pools:['swamp','swamp','swamp','swamp']}            // ур. 17-20
+];
+const META=[]; GROUPS.forEach(g=>g.pools.forEach((pl,i)=>META.push(
+  {worldW:20000+((META.length*1700)%5000), biome:g.biome, pool:pl, boss:i===g.pools.length-1})));
 function genLevel(idx){
   const m=META[idx], W=m.worldW, R=rng(2000+idx*167);
   const gaps=[],platforms=[],enemies=[],bananas=[],lifeUps=[],barriers=[];
@@ -137,16 +187,16 @@ function genLevel(idx){
   x=650;
   while(x<W-650){ const y=288+Math.floor(R()*52);           // reachable height range
     if(!inGap(x)){ platforms.push([x,y]); if(R()<0.5) bananas.push([x,y-30]);
-      if(R()<0.4) enemies.push({type:pickType(m.theme,R),x,y:y-46,min:x-70,max:x+70}); }
+      if(R()<0.4) enemies.push({type:pickType(m.pool,R),x,y:y-46,min:x-70,max:x+70}); }
     x+=520+Math.floor(R()*340); }
   const towerTops=[]; let tx=2600;
   while(tx<W-1600){ if(!inGap(tx)){ const steps=3+Math.floor(R()*2); let sx=tx, sy=336;
     for(let i=0;i<steps;i++){ platforms.push([sx,sy]);
-      if(i>0 && R()<0.4) enemies.push({type:pickType(m.theme,R),x:sx,y:sy-46,min:sx-50,max:sx+50});
+      if(i>0 && R()<0.4) enemies.push({type:pickType(m.pool,R),x:sx,y:sy-46,min:sx-50,max:sx+50});
       sx += (R()<0.5?-1:1)*(82+Math.floor(R()*20)); sy=Math.max(150,sy-(96+Math.floor(R()*18))); }  // gentler, reachable
     towerTops.push([sx,sy]); } tx+=3000+Math.floor(R()*1100); }
   x=420; while(x<W-300){ bananas.push([x,360]); x+=470+Math.floor(R()*300); }
-  x=820; while(x<W-1000){ let ex=x; if(inGap(ex))ex+=170; enemies.push({type:pickType(m.theme,R),x:ex,y:300,min:ex-220,max:ex+220}); x+=720+Math.floor(R()*420); }
+  x=820; while(x<W-1000){ let ex=x; if(inGap(ex))ex+=170; enemies.push({type:pickType(m.pool,R),x:ex,y:300,min:ex-220,max:ex+220}); x+=720+Math.floor(R()*420); }
   towerTops.forEach((t,i)=>{ if(i%2===0 && lifeUps.length<3) lifeUps.push([t[0],t[1]-26]); else bananas.push([t[0],t[1]-26]); });
   while(lifeUps.length<2 && towerTops.length){ const t=towerTops.pop(); lifeUps.push([t[0],t[1]-26]); }
   let bx=1300;
@@ -154,29 +204,31 @@ function genLevel(idx){
       barriers.push({kind: r<0.42?'spikes':(r<0.66?'thorn':(r<0.84?'stone':'palisade')), x:bx}); }
     bx+=1250+Math.floor(R()*850); }
   if(!inGap(Math.round(W*0.5))) barriers.push({kind:'gate',x:Math.round(W*0.5)});  // decorative archway
-  const CUT={
+  const CUT=({
     0:[[Math.round(W*0.16),[["Орк","Стой, обезьяна! Эта тропа теперь наша."],["Герой","Долина животных — не ваша."],["Орк","Скоро будет наша вся. ВЗЯТЬ ЕГО!"]]],
        [Math.round(W*0.6),[["Орк","Слышь, банан! За тобой должок — за вытоптанные грядки."],["Орк","Лови ребят на гостинец!"]]]],
     1:[[Math.round(W*0.14),[["Орк-капрал","А, тот самый банан, что прорвался. Босс будет рад твоей шкуре."],["Герой","Передай боссу: я уже иду."],["Орк-капрал","Сначала пройди МОИХ парней!"]]],
        [Math.round(W*0.62),[["Орк","Гррр! Окружай его, лучники — на холм!"]]]],
     2:[[Math.round(W*0.14),[["Орк-страж","Дальше — логово Паучихи. Поворачивай, мохнатый."],["Герой","Я пришёл не поворачивать."],["Орк-страж","Тогда ты пришёл умереть. В АТАКУ!"]]],
-       [Math.round(W*0.6),[["Орк","Последний рубеж! Щитоносцы — вперёд!"]]]]
-  }[idx];
+       [Math.round(W*0.6),[["Орк","Последний рубеж! Щитоносцы — вперёд!"]]]],
+    3:[[Math.round(W*0.16),[["Орк","Добро пожаловать в наши топи, банан. Отсюда не выбираются."],["Герой","Я не уйду, пока вы не уйдёте."],["Орк","Тогда тут и сгниёшь! ТРОЛЛИ, к бою!"]]]],
+    6:[[Math.round(W*0.14),[["Орк","Ты дошёл до Вожака? Глупец. Он раздавит тебя как банан."],["Герой","Пусть попробует."]]]]
+  })[idx]||[];
   const cuts=CUT.map(c=>({x:c[0],lines:c[1],done:false}));
   cuts.forEach(c=>{ const n=2+Math.floor(R()*2); c.spawn=[]; for(let i=0;i<n;i++) c.spawn.push({type:(i===0&&R()<0.5?'thrower':'orc'),x:c.x+150+i*120,y:160,min:c.x+40,max:c.x+560}); });
   let flagX=null; if(m.boss){ enemies.push({type:'boss',x:W-320,y:250,min:W-720,max:W-130}); } else flagX=W-120;
-  return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cuts,flagX,boss:m.boss};
+  return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cuts,flagX,boss:m.boss,biome:m.biome};
 }
 
 function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:800,height:450},
   physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
 function startInstance(){ paused=false; pauseReason=null; game=new Phaser.Game(makeConfig()); }
-function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0;
+function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0; playedCine={};
   upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startInstance(); }
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
   const hf=HK().files; if(hf) for(const k in hf) this.load.image(k,hf[k]);
-  this.load.on('loaderror',()=>{ selectedHero='mono'; }); }   // нет спрайта героя — откат на моно
+  this.load.on('loaderror',(file)=>{ if(file&&file.key&&file.key.indexOf('h2_')===0) selectedHero='mono'; }); }   // нет спрайта героя — откат на моно
 function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
   if(s==='run')p.anims.play('run_'+selectedHero,true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);} }
 function updateWeaponHUD(scene){ if(!scene.whl)return;
@@ -202,19 +254,20 @@ function create(){
   if(!this.textures.exists('life')){ const hg=this.make.graphics({add:false});
     hg.fillStyle(0xff4d6d); hg.fillCircle(8,9,7); hg.fillCircle(18,9,7); hg.fillTriangle(2,12,24,12,13,27);
     hg.fillStyle(0xffffff,0.7); hg.fillCircle(6,7,2.2); hg.generateTexture('life',26,28); hg.destroy(); }
-  const dim=0xa6abb5;
-  this.bgFar=this.add.tileSprite(400,225,800,450,'bg_far').setScrollFactor(0).setDepth(-5).setTint(dim);
-  this.bgMid=this.add.tileSprite(400,225,800,450,'bg_mid').setScrollFactor(0).setDepth(-4).setTint(dim);
-  this.bgFront=this.add.tileSprite(400,225,800,450,'bg_front').setScrollFactor(0).setDepth(-3).setTint(dim);
-  this.add.rectangle(400,225,800,450,0x0a1410,0.16).setScrollFactor(0).setDepth(-2);
+  const bc=BIOMES[cfg.biome], bvz=vis(cfg.biome), dim=bc.tint;
+  this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName};
+  this.bgFar=this.add.tileSprite(400,225,800,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
+  this.bgMid=this.add.tileSprite(400,225,800,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
+  this.bgFront=this.add.tileSprite(400,225,800,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
+  this.add.rectangle(400,225,800,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
   if(!this.anims.exists('run_'+selectedHero)){
     this.anims.create({key:'run_'+selectedHero,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
   if(!this.anims.exists('swim')){
     this.anims.create({key:'swim',frames:[{key:'s1'},{key:'s2'}],frameRate:5,repeat:-1});
     this.anims.create({key:'orcwalk',frames:[{key:'orc1'},{key:'orc2'}],frameRate:6,repeat:-1}); }
-  this.platforms=this.physics.add.staticGroup();
-  for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,'tile'); }
-  cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],'tile'); });
+  this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
+  for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
+  cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],TKEY); });
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
@@ -235,18 +288,25 @@ function create(){
   this.physics.add.collider(this.eprojs,this.platforms,pr=>pr.destroy());
 
   this.hazards=this.physics.add.staticGroup(); this.solids=this.physics.add.staticGroup();
+  const OB=this.biomeCfg.obst, GY=412;
+  const place=(grp,key,x)=>{ const s=grp.create(x,0,key); s.setPosition(x,GY+6-s.height*0.5); s.refreshBody(); return s; };
   cfg.barriers.forEach(b=>{
-    if(b.kind==='spikes'){ const s=this.hazards.create(b.x,393,'b_spikes'); s.body.setSize(s.width*0.9,s.height*0.5).setOffset(s.width*0.05,s.height*0.5); }
-    else if(b.kind==='thorn'){ const s=this.hazards.create(b.x,382,'b_thorn'); s.body.setSize(s.width*0.8,s.height*0.7).setOffset(s.width*0.1,s.height*0.3); }
-    else if(b.kind==='stone'){ const s=this.solids.create(b.x,372,'b_stone'); s.hp=8; s.breakable=true; }
-    else if(b.kind==='palisade'){ this.solids.create(b.x,366,'b_palisade'); }
-    else if(b.kind==='gate'){ this.add.image(b.x,348,'b_gate').setDepth(-1).setTint(dim); } // decorative, never blocks
+    if(b.kind==='spikes'){ const s=place(this.hazards,OB.spikes,b.x); s.body.setSize(s.width*0.82,s.height*0.55).setOffset(s.width*0.09,s.height*0.42); }
+    else if(b.kind==='thorn'){ const s=place(this.hazards,OB.thorn,b.x); s.body.setSize(s.width*0.8,s.height*0.6).setOffset(s.width*0.1,s.height*0.35); }
+    else if(b.kind==='stone'){ const s=place(this.solids,OB.stone,b.x); s.hp=8; s.breakable=true; }
+    else if(b.kind==='palisade'){ place(this.solids,OB.palisade,b.x); }
+    else if(b.kind==='gate'){ const g=this.add.image(b.x,0,OB.gate).setDepth(-1).setTint(dim); g.setY(GY+6-g.height*0.5); } // decor, не блокирует
   });
   this.physics.add.overlap(this.player,this.hazards,(p,h)=>hurtPlayer(this,h.x),null,this);
   this.physics.add.collider(this.player,this.solids);
   this.physics.add.collider(this.enemies,this.solids);
   this.physics.add.collider(this.projs,this.solids,(pr,s)=>{ if(s.breakable){ s.hp-=2; if(s.hp<=0)s.destroy(); else {s.setTint(0xffaaaa);this.time.delayedCall(80,()=>{if(s.active)s.clearTint();});} } pr.destroy(); });
   this.physics.add.collider(this.eprojs,this.solids,pr=>pr.destroy());
+
+  this.rocks=this.physics.add.group();                       // катящиеся валуны троллей
+  this.physics.add.collider(this.rocks,this.platforms);
+  this.physics.add.collider(this.rocks,this.solids,(r,s)=>{ if(s.breakable){ s.hp-=3; if(s.hp<=0)s.destroy(); } r.destroy(); });
+  this.physics.add.overlap(this.player,this.rocks,(p,r)=>{ const rx=r.x; r.destroy(); hurtPlayer(this,rx); },null,this);
 
   this.bananas=this.physics.add.staticGroup();
   cfg.bananas.forEach(b=>this.bananas.create(b[0],b[1],'banana'));
@@ -277,15 +337,17 @@ function create(){
 
   if(cfg.boss){ this.add.rectangle(400,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
     this.bossBar=this.add.rectangle(250,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
-    this.add.text(400,46,'ПАУК-СТРАЖ',{fontFamily:'Trebuchet MS',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
-  const banner=this.add.text(400,150,cfg.boss?'Уровень 3\nЛогово паука':('Уровень '+(currentLevel+1)),
+    this.add.text(400,46,this.biomeCfg.bossName,{fontFamily:'Trebuchet MS',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
+  const banner=this.add.text(400,150,cfg.boss?('Уровень '+(currentLevel+1)+'\n'+this.biomeCfg.bossName):('Уровень '+(currentLevel+1)),
     {fontFamily:'Trebuchet MS',fontSize:'34px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
 }
 
 function spawnEnemy(scene,e){
   const k=e.type, now=scene.time.now;
-  const tex={shrimp:'s1',orc:'orc1',thrower:'k_thrower',archer:'k_archer',shield:'k_shield',berserk:'k_berserk',boss:'spider'}[k]||'orc1';
+  const tex={shrimp:'s1',orc:'orc1',thrower:'k_thrower',archer:'k_archer',shield:'k_shield',berserk:'k_berserk',
+    troll_club:'t_club',troll_bone:'t_bone',troll_boulder:'t_boulder',
+    boss:(scene.biomeCfg&&scene.biomeCfg.boss)||'spider'}[k]||'orc1';
   const s=scene.enemies.create(e.x,e.y,tex); s.setData('type',k); s.setData('min',e.min); s.setData('max',e.max);
   const W=s.width,H=s.height;
   if(k==='shrimp'){ s.hp=1; s.speed=55; s.body.setSize(W*0.72,H*0.62).setOffset(W*0.14,H*0.38); s.setVelocityX(-55); s.play('swim'); }
@@ -294,13 +356,18 @@ function spawnEnemy(scene,e){
   else if(k==='shield'){ s.hp=18; s.speed=65; s.chase=95; s.body.setSize(W*0.5,H*0.82).setOffset(W*0.25,H*0.18); s.nextInv=now+2200; }
   else if(k==='thrower'){ s.hp=8; s.speed=95; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+800; }
   else if(k==='archer'){ s.hp=8; s.speed=70; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+1100; }
-  else { s.hp=18; s.speed=95; s.body.setSize(W*0.7,H*0.55).setOffset(W*0.15,H*0.45); s.isBoss=true; scene.boss=s; }
+  else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); }
+  else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; }
+  else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; }
   s.maxhp=s.hp; return s;
 }
 function spawnSquad(scene,list){ list.forEach(e=>{ const s=spawnEnemy(scene,e); if(s){ s.setAlpha(0); scene.tweens.add({targets:s,alpha:1,duration:280}); } }); }
 function fireAt(scene,e,tex,speed){ const dir=scene.player.x<e.x?-1:1;
   const pr=scene.eprojs.create(e.x+dir*16,e.y-4,tex); pr.body.setAllowGravity(false);
   pr.setVelocityX(dir*speed); pr.setFlipX(dir<0); pr.setDepth(5); pr.born=scene.time.now; if(tex==='e_knife')pr.setAngularVelocity(dir*700); }
+function fireRock(scene,e){ const dir=scene.player.x<e.x?-1:1;
+  const r=scene.rocks.create(e.x+dir*30,e.y+8,'boulder'); r.setVelocityX(dir*235); r.setAngularVelocity(dir*330);
+  r.setBounce(0.12); r.setDepth(5); r.born=scene.time.now; }
 
 function update(){
   if(gameOver||paused)return;
@@ -334,6 +401,10 @@ function update(){
       if(adx<rng&&Math.abs(dy)<150){ if(adx<120){ e.setVelocityX(dx<0?e.speed:-e.speed); }
         else { e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+(t==='archer'?1500:1100); fireAt(this,e,t==='archer'?'e_arrow':'e_knife',t==='archer'?370:270);} } }
       else { if(e.x<=mn){e.setVelocityX(e.speed);} else if(e.x>=mx){e.setVelocityX(-e.speed);} } }
+    else if(t==='troll_boulder'){ e.setFlipX(dx<0); const rng=540;
+      if(adx<rng&&Math.abs(dy)<175){ if(adx<175){ e.setVelocityX(dx<0?e.speed:-e.speed); }      // отступает
+        else { e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+2400; fireRock(this,e); } } }
+      else { if(e.x<=mn){e.setVelocityX(e.speed);} else if(e.x>=mx){e.setVelocityX(-e.speed);} } }
     else { if(t==='shield'){ if(now>e.nextInv){ e.inv=true; e.invEnd=now+1500; e.nextInv=now+3800; e.setTint(0x9fd8ff); } if(e.inv&&now>e.invEnd){ e.inv=false; e.clearTint(); } }
       const det=440, csp=e.chase||150;
       if(adx<det&&Math.abs(dy)<150){ e.setVelocityX(dx<0?-csp:csp); e.setFlipX(dx<0);
@@ -344,6 +415,7 @@ function update(){
 
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
   this.eprojs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>2600) pr.destroy(); });
+  if(this.rocks){ const camx=this.cameras.main.scrollX; this.rocks.children.iterate(r=>{ if(r&&r.active&&(now-r.born>5200||r.x<camx-120||r.x>camx+920||r.y>620)) r.destroy(); }); }
   if(this.bossBar) this.bossBar.setSize(this.boss?Math.max(0,300*(this.boss.hp/this.boss.maxhp)):0,12);
 }
 
@@ -365,8 +437,10 @@ function blockSpark(e){ const s=e.scene.add.text(e.x,e.y-30,'✦',{fontFamily:'T
   e.scene.tweens.add({targets:s,alpha:0,y:e.y-52,duration:300,onComplete:()=>s.destroy()}); }
 function damageEnemy(e,dmg){ const scene=e.scene; if(e.inv){ blockSpark(e); return; }
   e.hp-=dmg; e.setTint(0xff6666); scene.time.delayedCall(110,()=>{ if(e.active&&!e.inv)e.clearTint(); });
-  if(e.hp<=0){ const t=e.getData('type'), pts=t==='shrimp'?50:(t==='boss'?700:(t==='berserk'?160:120)); score+=pts; updateHud(scene); checkUpgrade(scene);
-    const boss=e.isBoss; e.disableBody(true,true); if(boss){ scene.boss=null; gameOver=true; scene.physics.pause(); window.showWin(); } } }
+  if(e.hp<=0){ const t=e.getData('type'), pts=t==='shrimp'?50:(t==='boss'?700:(t==='berserk'?160:(t.indexOf('troll')===0?200:120))); score+=pts; updateHud(scene); checkUpgrade(scene);
+    const boss=e.isBoss; e.disableBody(true,true);
+    if(boss){ scene.boss=null; gameOver=true; scene.physics.pause();
+      if(currentLevel<META.length-1) window.levelClear(currentLevel+1); else window.showWin(); } } }
 function hitEnemy(player,e){ if(player.body.touching.down&&e.body.touching.up){ if(!e.inv)damageEnemy(e,STOMP_DMG); else blockSpark(e); player.setVelocityY(-440); } else hurtPlayer(player.scene,e.x); }
 function collectBanana(player,banana){ banana.disableBody(true,true); score+=10; updateHud(player.scene); checkUpgrade(player.scene); }
 function getLife(player,l){ l.disableBody(true,true); lives=Math.min(lives+1,9); updateHud(player.scene);
