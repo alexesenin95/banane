@@ -2,7 +2,7 @@
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
 /* --- временная диагностика: метка сборки + видимый ловец ошибок --- */
-(function(){ const BUILD='build-4 · transition-pause+heroFit · 2026-06-14';
+(function(){ const BUILD='build-5 · heroSize62+spriteClean · 2026-06-14';
   window.__BUILD=BUILD; try{ console.log('BANANE',BUILD); }catch(e){}
   function showErr(msg){ let d=document.getElementById('__err');
     if(!d){ d=document.createElement('div'); d.id='__err';
@@ -39,7 +39,7 @@ const HEROES={
 };
 let selectedHero='mono';
 const HK=()=>HEROES[selectedHero];
-const HERO_DH={ orang:84 };   // целевая экранная высота героя в px (под размер орков); моно — нативный размер
+const HERO_DH={ orang:62 };   // целевая экранная высота героя в px (= габарит старой обезьяны, чтобы пролазил в те же щели); моно — нативный размер
 const ADMIN=true;                 // dev-only level switching; set false for players
 const STOMP_DMG=3;
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
