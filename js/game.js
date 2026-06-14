@@ -2,7 +2,7 @@
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
 /* --- временная диагностика: метка сборки + видимый ловец ошибок --- */
-(function(){ const BUILD='build-3 · restart+heroScale · 2026-06-14';
+(function(){ const BUILD='build-4 · transition-pause+heroFit · 2026-06-14';
   window.__BUILD=BUILD; try{ console.log('BANANE',BUILD); }catch(e){}
   function showErr(msg){ let d=document.getElementById('__err');
     if(!d){ d=document.createElement('div'); d.id='__err';
@@ -159,6 +159,7 @@ window.levelClear=n=>endScreenG('Уровень '+n+' пройден!',score,'Д
 window.showWin=()=>endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart');
 window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');
 document.getElementById('endBtn').onclick=()=>{ hide('endScreen');
+  if(activeScene&&activeScene.scene) activeScene.scene.pause();   // заморозить старый уровень: его update() не должен крутиться во время кат-сцены/перехода
   if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
 
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -253,8 +254,15 @@ function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; 
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
   const hf=HK().files; if(hf) for(const k in hf) this.load.image(k,hf[k]);
   this.load.on('loaderror',(file)=>{ if(file&&file.key&&file.key.indexOf('h2_')===0) selectedHero='mono'; }); }   // нет спрайта героя — откат на моно
+// Нормализация героя к постоянной экранной высоте (HERO_DH). Кадры орангутана разной высоты —
+// без этого и спрайт, и хитбокс «прыгают» каждый кадр. Тело пересчитывается пропорционально кадру,
+// а масштаб обратно пропорционален высоте кадра → мировые размеры/положение тела стабильны.
+function fitHero(p){ const t=HERO_DH[selectedHero]; if(!t||!p.height) return;
+  const fw=p.width, fh=p.height; p.setScale(t/fh);
+  if(p.body){ p.body.setSize(fw*0.30,fh*0.80); p.body.setOffset(fw*0.35,fh*0.20); } }
 function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
-  if(s==='run')p.anims.play('run_'+selectedHero,true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);} }
+  if(s==='run')p.anims.play('run_'+selectedHero,true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);}
+  fitHero(p); }
 function updateWeaponHUD(scene){ if(!scene.whl)return;
   scene.whl.x=currentWeapon==='boomerang'?728:762;
   scene.wIcons.boomerang.setAlpha(currentWeapon==='boomerang'?1:0.45);
@@ -296,11 +304,10 @@ function create(){
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
-  const _hdh=HERO_DH[selectedHero]; if(_hdh&&this.player.height){ this.player.setScale(_hdh/this.player.height);   // ужать крупного героя (орангутан) до размера орков
-    this.player.setOrigin(0.5,1);   // привязка по ступням: кадры бега разной высоты больше не «прыгают» по вертикали
-  }
   const pw=this.player.width||PW, ph=this.player.height||PHH;
   this.player.body.setSize(pw*0.3,ph*0.8).setOffset(pw*0.35,ph*0.2);
+  fitHero(this.player);                                            // ужать крупного героя (орангутан) до размера орков
+  this.player.on('animationupdate',()=>fitHero(this.player));      // держать размер постоянным на каждом кадре бега
   this.physics.add.collider(this.player,this.platforms);
   this.cpX=80;
 
