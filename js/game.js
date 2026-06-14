@@ -279,6 +279,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
 
 function create(){
   gameOver=false; paused=false; pauseReason=null; activeScene=this;
+  this.bossBar=null; this.boss=null; this.flag=null;   // scene.restart переиспользует объект сцены — гасим ссылки прошлого уровня (иначе update зовёт методы на уничтоженных объектах)
   if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
   const cfg=genLevel(currentLevel), W=cfg.worldW;
   this.cuts=cfg.cuts; this.cpInGap=(x)=>cfg.gaps.some(g=>x>=g[0]-20&&x<=g[1]+20);
@@ -451,7 +452,7 @@ function update(){
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
   this.eprojs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>2600) pr.destroy(); });
   if(this.rocks){ const camx=this.cameras.main.scrollX; this.rocks.children.iterate(r=>{ if(r&&r.active&&(now-r.born>5200||r.x<camx-120||r.x>camx+920||r.y>620)) r.destroy(); }); }
-  if(this.bossBar) this.bossBar.setSize(this.boss?Math.max(0,300*(this.boss.hp/this.boss.maxhp)):0,12);
+  if(this.bossBar&&this.bossBar.active) this.bossBar.setSize(this.boss?Math.max(0,300*(this.boss.hp/this.boss.maxhp)):0,12);
 }
 
 function doAttack(scene){
