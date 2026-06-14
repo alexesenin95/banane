@@ -15,6 +15,7 @@
     <h1>Банановый поход</h1>
     <p class="sub">Орки и креветки вторглись в Долину животных. Поднимайся, герой.</p>
     <button class="btn" id="startBtn">В путь →</button>
+    <button class="btn" id="continueBtn" style="display:none;margin-top:10px;background:var(--leaf-dk);color:var(--cream);box-shadow:0 5px 0 #163f1a">Продолжить</button>
     <div class="hintbar">Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь</div>
   </div>
   <div id="charselect" class="overlay">
@@ -70,6 +71,14 @@
     <p id="cineText"></p>
     <button class="btn" id="cineNext">Дальше →</button>
     <div class="hintbar">клик — продолжить</div>
+  </div>
+  <div id="banter" class="overlay">
+    <p class="eyebrow">привал · болтовня друзей</p>
+    <div id="banEmoji"></div>
+    <p class="shaman" id="banName"></p>
+    <p class="shaman-line" id="banText"></p>
+    <button class="btn" id="banNext">Дальше →</button>
+    <div class="hintbar" id="banSkip" style="cursor:pointer">пропустить →</div>
   </div>
   <div id="endScreen" class="overlay">
     <h1 id="endTitle"></h1><p id="endScore">Очки: 0</p><button class="btn" id="endBtn">Дальше</button>

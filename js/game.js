@@ -139,14 +139,76 @@ function renderCine(){ const img=document.getElementById('cineImg'); img.src=cin
   document.getElementById('cineNext').textContent=(cineI>=cineQ.length-1)?'В бой →':'Дальше →'; }
 function advanceCine(){ cineI++; if(cineI>=cineQ.length){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); return; } renderCine(); }
 document.getElementById('cinematic').onclick=advanceCine;
-function startLevelFlow(){ const def=CINEMATICS[currentLevel]; if(def&&!playedCine[currentLevel]){ playedCine[currentLevel]=true; playCinematic(def,startInstance); } else startInstance(); }
+/* ---- предуровневый трёп: птица + ленивец + обезьяна (по уровню) ---- */
+const SPK={ bird:{emoji:'🦜',name:'Кеша',color:'#7fd1ff'},
+            sloth:{emoji:'🦥',name:'Тормозок',color:'#d9c08a'},
+            hero:{emoji:'🐵',name:'Бана',color:'#ffc93c'} };
+const BANTER={
+  0:[['bird','Бана, проснись! Орки жрут наши бананы прямо с кожурой!'],['sloth','С кожурой?.. варвары. Я бы возмутился, но это отнимет силы.'],['hero','Доедают последний? Уже бегу.']],
+  1:[['bird','Их там целый отряд! Я насчитал… много. Сбился на трёх.'],['sloth','А я насчитал ноль. Глаза закрыты — так спокойнее.'],['hero','Считайте отсюда. Я уменьшу число лично.']],
+  2:[['bird','ПАУК! Гигантский! Восемь ног и ни капли вежливости!'],['sloth','Восемь ног — и всё равно медленнее меня по утрам.'],['hero','Паутину — в сторону. Долину — назад.']],
+  3:[['bird','Фу, болото! Пахнет орком и прошлогодним носком.'],['sloth','Мой любимый аромат. Напоминает дом.'],['hero','Дышите ртом. Идём дальше.']],
+  4:[['bird','Тролли! Здоровые, как холодильник, и вдвое тупее!'],['sloth','Холодильник хотя бы не машет дубиной… обычно.'],['hero','Значит, увернёмся и стукнем первыми.']],
+  5:[['bird','Бана, у меня плохое предчувствие. И хорошее — что не у меня одного.'],['sloth','А у меня предчувствие, что я вздремну. Удачи.'],['hero','Спасибо за поддержку. Незаменимы.']],
+  6:[['bird','ВОЖАК ТРОЛЛЕЙ! Размером с дерево! Со злым деревом!'],['sloth','Большой — значит, большая цель. Логично же.'],['hero','Впервые согласен с ленивцем. Погнали.']],
+  7:[['bird','Пещеры! Темно, сыро, и эхо повторяет мои гениальные шутки!'],['sloth','…шутки… шутки… — даже эхо устало.'],['hero','Тише. Орки слышат болтовню за версту.']],
+  8:[['bird','Я ничего не вижу! Бана, ты где? Ой, это была стена.'],['sloth','А я вижу всё. С закрытыми глазами одинаково темно.'],['hero','Держитесь за мной. И не врезайтесь.']],
+  9:[['bird','Тут орки прячут награбленные бананы! НАШИ бананы!'],['sloth','Освободим их… медленно… с чувством.'],['hero','Освободим быстро. Потом отпразднуем.']],
+  10:[['bird','Своды трещат! Это нормально? Скажи, что нормально!'],['sloth','Всё рушится. Как и мой режим сна. Привыкай.'],['hero','Бегом под обвалом. За мной.']],
+  11:[['bird','ПЕЩЕРНЫЙ ТРОЛЛЬ! Швыряется камнями размером с меня!'],['sloth','Значит, в меня не попадёт. Я слишком расслаблен.'],['hero','Камни — мимо. Я — в него.']],
+  12:[['bird','Ледник! Бр-р! У меня клюв примёрз к словам.'],['sloth','Холод — лучшее снотворное. Разбудите весной.'],['hero','Не спать. Замёрзнешь — станешь сосулькой.']],
+  13:[['bird','Скользко! Я поехал! Я не контролирую птицу!'],['sloth','Я тоже скольжу. Но мне всё равно куда.'],['hero','Держитесь. Тормозим о сугробы.']],
+  14:[['bird','Орки в шубах! Нечестно, у меня только перья!'],['sloth','А у меня мех и достоинство. Достоинство необязательно.'],['hero','Согреемся в бою. Вперёд.']],
+  15:[['bird','ШАМАН! Колдует! Посох и очень плохой характер!'],['sloth','Посох — это палка с амбициями. Сломаем амбиции.'],['hero','Разобьём посох — рассыплется магия.']],
+  16:[['bird','Небесные руины! Наконец-то МОЯ стихия! Высота!'],['sloth','Высота… падать долго… успею вздремнуть на лету.'],['hero','Не проверяй. Держись троп.']],
+  17:[['bird','Мосты висят на честном слове! И слово, кажется, «ой».'],['sloth','Я доверяю мостам. Они тоже еле держатся — мы похожи.'],['hero','Прыгаем по очереди. Аккуратно.']],
+  18:[['bird','Почти у логова главного! Чувствуешь? Это запах победы!'],['sloth','Это запах меня. Я не мылся с самых джунглей.'],['hero','Победа ближе. Ещё рывок.']],
+  19:[['bird','ВОЕНАЧАЛЬНИК ОРКОВ! Босс всех боссов! ФИНАЛ!'],['sloth','Финал? Отлично. Потом можно наконец поспать.'],['hero','За Долину, за бананы, за вас двоих. ВПЕРЁД!']]
+};
+let banLines=[], banI=0, banCb=null, playedBanter={};
+function playBanter(idx,cb){ const lines=BANTER[idx]; if(!lines||playedBanter[idx]){ if(cb)cb(); return; }
+  playedBanter[idx]=true; banLines=lines; banI=0; banCb=cb; show('banter'); renderBanter(); }
+function renderBanter(){ const [who,txt]=banLines[banI]; const s=SPK[who]||SPK.hero;
+  const em=document.getElementById('banEmoji'); em.textContent=s.emoji; em.style.animation='none'; void em.offsetWidth; em.style.animation='pop .25s ease';
+  const nm=document.getElementById('banName'); nm.textContent=s.name; nm.style.color=s.color;
+  document.getElementById('banText').textContent='«'+txt+'»';
+  document.getElementById('banNext').textContent=(banI>=banLines.length-1)?'В путь →':'Дальше →'; }
+function advanceBanter(){ banI++; if(banI>=banLines.length){ endBanter(); return; } renderBanter(); }
+function endBanter(){ hide('banter'); const cb=banCb; banCb=null; if(cb)cb(); }
+document.getElementById('banter').onclick=e=>{ if(e.target&&e.target.id==='banSkip') endBanter(); else advanceBanter(); };
+
+/* ---- бой-диалог при появлении босса (по биому) ---- */
+const BOSSCUT={
+  jungle:[['Орк','Босс учуял тебя, банан. Паучиха голодна!'],['Герой','Тогда не будем заставлять её ждать.']],
+  swamp:[['Орк','ВОЖАК идёт! Топи дрогнут!'],['Герой','Пусть дрогнут. Я устою.']],
+  cave:[['Орк','Из темноты выходит наш силач. Беги!'],['Герой','Я принёс свет. И кулаки.']],
+  ice:[['Орк','Шаман заморозит твою кровь!'],['Герой','Согреюсь об его посох.']],
+  sky:[['Орк','Сам ВОЕНАЧАЛЬНИК встречает тебя. Это честь — и твой конец.'],['Герой','Честь приму. Конец оставь себе.']]
+};
+
+/* ---- сохранение прогресса ---- */
+const SAVE_KEY='banane_save_v1';
+function saveProgress(level){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify({level,score,hero:selectedHero,weapon:currentWeapon,upgraded})); }catch(e){} }
+function loadSave(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; } }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function applyUpgradeState(){ const lv=upgraded?2:1, dm=upgraded?3:2;
+  WEAPONS.boomerang.dmg=dm; WEAPONS.club.dmg=dm; WEAPONS.boomerang.level=lv; WEAPONS.club.level=lv; }
+function continueGame(){ const s=loadSave(); if(!s)return; hide('title');
+  selectedHero=s.hero||'mono'; chosenWeapon=s.weapon||'boomerang'; currentWeapon=chosenWeapon;
+  score=s.score||0; currentLevel=Math.min(s.level||0,META.length-1); upgraded=!!s.upgraded;
+  playedCine={}; playedBanter={}; applyUpgradeState(); startLevelFlow(); }
+
+function startLevelFlow(){ playBanter(currentLevel,()=>{
+  const def=CINEMATICS[currentLevel];
+  if(def&&!playedCine[currentLevel]){ playedCine[currentLevel]=true; playCinematic(def,startInstance); }
+  else startInstance(); }); }
 
 let endAction='restart';
 function endScreenG(title,s,btn,action){ document.getElementById('endTitle').textContent=title;
   document.getElementById('endScore').textContent='Очки: '+s; document.getElementById('endBtn').textContent=btn; endAction=action; show('endScreen'); }
-window.levelClear=n=>endScreenG('Уровень '+n+' пройден!',score,'Дальше →','next');
-window.showWin=()=>endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart');
-window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');
+window.levelClear=n=>{ saveProgress(n); endScreenG('Уровень '+n+' пройден!',score,'Дальше →','next'); };  // n = индекс следующего уровня (автосейв)
+window.showWin=()=>{ clearSave(); endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart'); };
+window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');   // сейв сохраняем — «Продолжить» вернёт на последний уровень
 document.getElementById('endBtn').onclick=()=>{ hide('endScreen');
   if(activeScene&&activeScene.scene) activeScene.scene.pause();   // заморозить старый уровень: его update() не должен крутиться во время кат-сцены/перехода
   if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
@@ -220,6 +282,7 @@ function genLevel(idx){
     6:[[Math.round(W*0.14),[["Орк","Ты дошёл до Вожака? Глупец. Он раздавит тебя как банан."],["Герой","Пусть попробует."]]]]
   })[idx]||[];
   const cuts=CUT.map(c=>({x:c[0],lines:c[1],done:false}));
+  if(m.boss){ cuts.push({x:Math.round(W*0.86),lines:BOSSCUT[m.biome]||BOSSCUT.jungle,done:false}); }   // бой-диалог + подкрепление перед боссом
   cuts.forEach(c=>{ const n=2+Math.floor(R()*2); c.spawn=[]; for(let i=0;i<n;i++) c.spawn.push({type:(i===0&&R()<0.5?'thrower':'orc'),x:c.x+150+i*120,y:160,min:c.x+40,max:c.x+560}); });
   let flagX=null; if(m.boss){ enemies.push({type:'boss',x:W-320,y:250,min:W-720,max:W-130}); } else flagX=W-120;
   return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cuts,flagX,boss:m.boss,biome:m.biome};
@@ -234,8 +297,8 @@ function startInstance(){ paused=false; pauseReason=null;
   if(game&&sc&&sc.scene){ sc.scene.restart(); return; }
   if(game){ try{game.destroy(true);}catch(e){} game=null; }
   game=new Phaser.Game(makeConfig()); }
-function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0; playedCine={};
-  upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startInstance(); }
+function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=4; currentLevel=0; playedCine={}; playedBanter={};
+  upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startLevelFlow(); }
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
   const hf=HK().files; if(hf) for(const k in hf) this.load.image(k,hf[k]);
   this.load.on('loaderror',(file)=>{ if(file&&file.key&&file.key.indexOf('h2_')===0) selectedHero='mono'; }); }   // нет спрайта героя — откат на моно
@@ -265,6 +328,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
 function create(){
   gameOver=false; paused=false; pauseReason=null; activeScene=this;
   this.bossBar=null; this.boss=null; this.flag=null;   // scene.restart переиспользует объект сцены — гасим ссылки прошлого уровня (иначе update зовёт методы на уничтоженных объектах)
+  lives=Math.max(lives,4);   // на каждый уровень — минимум 4 жизни
   if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
   const cfg=genLevel(currentLevel), W=cfg.worldW;
   this.cuts=cfg.cuts; this.cpInGap=(x)=>cfg.gaps.some(g=>x>=g[0]-20&&x<=g[1]+20);
@@ -503,3 +567,8 @@ function setupTouch(){
   document.addEventListener('visibilitychange',()=>{ if(document.hidden)clear(); });
 }
 setupTouch();
+
+/* ---- кнопка «Продолжить» на титуле (если есть сохранение) ---- */
+(function(){ const b=document.getElementById('continueBtn'); if(!b)return; const s=loadSave();
+  if(s&&typeof s.level==='number'&&s.level>0){ const n=Math.min(s.level,META.length-1)+1;
+    b.style.display=''; b.textContent='Продолжить (ур. '+n+')'; b.onclick=continueGame; } })();
