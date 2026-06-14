@@ -127,6 +127,8 @@ const CINEMATICS={ 3:{ panels:['assets/cutscenes/c4_1.webp','assets/cutscenes/c4
          '…пока не пришли орки. Огонь и дым поглотили деревню зверей.',
          'Выжженная земля захлебнулась гнилью — джунгли стали ядовитой топью.',
          'Но герой ещё стоит на краю болот. За Долину — вперёд!'] } };
+// прогреваем кэш браузера для кино-панелей заранее (чтобы переход на уровень не висел на их загрузке)
+Object.values(CINEMATICS).forEach(d=>d.panels.forEach(src=>{ const im=new Image(); im.src=src; }));
 let playedCine={}, cineQ=[], cineTexts=[], cineI=0, cineCb=null;
 function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
 function renderCine(){ const img=document.getElementById('cineImg'); img.src=cineQ[cineI];
@@ -143,7 +145,7 @@ function endScreenG(title,s,btn,action){ document.getElementById('endTitle').tex
 window.levelClear=n=>endScreenG('Уровень '+n+' пройден!',score,'Дальше →','next');
 window.showWin=()=>endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart');
 window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');
-document.getElementById('endBtn').onclick=()=>{ hide('endScreen'); if(game){game.destroy(true);game=null;}
+document.getElementById('endBtn').onclick=()=>{ hide('endScreen');
   if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
 
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -223,7 +225,10 @@ function genLevel(idx){
 function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:800,height:450},
   physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
-function startInstance(){ paused=false; pauseReason=null; game=new Phaser.Game(makeConfig()); }
+function startInstance(){ paused=false; pauseReason=null;
+  // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
+  if(!game){ game=new Phaser.Game(makeConfig()); return; }
+  const sc=activeScene||game.scene.getScene('default'); sc.scene.restart(); }
 function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0; playedCine={};
   upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startInstance(); }
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
@@ -247,6 +252,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
 
 function create(){
   gameOver=false; paused=false; pauseReason=null; activeScene=this;
+  if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
   const cfg=genLevel(currentLevel), W=cfg.worldW;
   this.cuts=cfg.cuts; this.cpInGap=(x)=>cfg.gaps.some(g=>x>=g[0]-20&&x<=g[1]+20);
   this.jumpVel=-680;
