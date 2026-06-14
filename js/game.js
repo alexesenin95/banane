@@ -9,6 +9,7 @@
       d.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;background:#b00020;color:#fff;font:12px/1.4 monospace;padding:8px 10px;white-space:pre-wrap;max-height:48vh;overflow:auto;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.5)';
       (document.body||document.documentElement).appendChild(d); }
     d.textContent='⚠ '+BUILD+'\n'+msg; }
+  window.__showErr=showErr;
   window.addEventListener('error',e=>showErr((e.error&&e.error.stack)||e.message||String(e)));
   window.addEventListener('unhandledrejection',e=>showErr('promise: '+((e.reason&&e.reason.stack)||e.reason||e)));
 })();
@@ -234,9 +235,13 @@ function genLevel(idx){
   return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cuts,flagX,boss:m.boss,biome:m.biome};
 }
 
+// оборачиваем колбэки сцены, чтобы поймать настоящий текст ошибки (иначе CORS прячет его за «Script error.»)
+function guard(fn){ return function(){ try{ return fn.apply(this,arguments); }
+  catch(e){ if(window.__showErr) window.__showErr('['+fn.name+'] '+((e&&e.stack)||e)); throw e; } }; }
 function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:800,height:450},
-  physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
+  physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},
+  scene:{preload:guard(preload),create:guard(create),update:guard(update)}};}
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
   const sc=game?(activeScene||game.scene.getScene('default')):null;
@@ -291,7 +296,9 @@ function create(){
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
-  const _hdh=HERO_DH[selectedHero]; if(_hdh&&this.player.height) this.player.setScale(_hdh/this.player.height);   // ужать крупного героя (орангутан) до размера орков
+  const _hdh=HERO_DH[selectedHero]; if(_hdh&&this.player.height){ this.player.setScale(_hdh/this.player.height);   // ужать крупного героя (орангутан) до размера орков
+    this.player.setOrigin(0.5,1);   // привязка по ступням: кадры бега разной высоты больше не «прыгают» по вертикали
+  }
   const pw=this.player.width||PW, ph=this.player.height||PHH;
   this.player.body.setSize(pw*0.3,ph*0.8).setOffset(pw*0.35,ph*0.2);
   this.physics.add.collider(this.player,this.platforms);
