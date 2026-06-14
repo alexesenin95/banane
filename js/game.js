@@ -1,18 +1,6 @@
 /* Банановый поход — игровая логика (Phaser 3).
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
-/* --- временная диагностика: метка сборки + видимый ловец ошибок --- */
-(function(){ const BUILD='build-6 · mobile-adaptive · 2026-06-14';
-  window.__BUILD=BUILD; try{ console.log('BANANE',BUILD); }catch(e){}
-  function showErr(msg){ let d=document.getElementById('__err');
-    if(!d){ d=document.createElement('div'); d.id='__err';
-      d.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;background:#b00020;color:#fff;font:12px/1.4 monospace;padding:8px 10px;white-space:pre-wrap;max-height:48vh;overflow:auto;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.5)';
-      (document.body||document.documentElement).appendChild(d); }
-    d.textContent='⚠ '+BUILD+'\n'+msg; }
-  window.__showErr=showErr;
-  window.addEventListener('error',e=>showErr((e.error&&e.error.stack)||e.message||String(e)));
-  window.addEventListener('unhandledrejection',e=>showErr('promise: '+((e.reason&&e.reason.stack)||e.reason||e)));
-})();
 const TEX = {"p_idle": "assets/sprites/p_idle.webp", "p_run1": "assets/sprites/p_run1.webp", "p_run2": "assets/sprites/p_run2.webp", "p_run3": "assets/sprites/p_run3.webp", "p_jump": "assets/sprites/p_jump.webp", "p_attack": "assets/sprites/p_attack.webp", "s1": "assets/sprites/s1.webp", "s2": "assets/sprites/s2.webp", "orc1": "assets/sprites/orc1.webp", "orc2": "assets/sprites/orc2.webp", "orc3": "assets/sprites/orc3.webp", "spider": "assets/sprites/spider.webp", "proj": "assets/sprites/proj.webp", "banana": "assets/sprites/banana.webp", "flag": "assets/sprites/flag.webp", "tile": "assets/sprites/tile.webp", "bg_far": "assets/bg/bg_far.webp", "bg_mid": "assets/bg/bg_mid.webp", "bg_front": "assets/bg/bg_front.webp", "k_thrower": "assets/sprites/k_thrower.webp", "k_archer": "assets/sprites/k_archer.webp", "k_shield": "assets/sprites/k_shield.webp", "k_berserk": "assets/sprites/k_berserk.webp", "e_knife": "assets/sprites/e_knife.webp", "e_arrow": "assets/sprites/e_arrow.webp", "b_spikes": "assets/sprites/b_spikes.webp", "b_thorn": "assets/sprites/b_thorn.webp", "b_stone": "assets/sprites/b_stone.webp", "b_palisade": "assets/sprites/b_palisade.webp", "b_gate": "assets/sprites/b_gate.webp", "wi_boom2": "assets/sprites/wi_boom2.webp", "wi_club2": "assets/sprites/wi_club2.webp", "wi_boom": "assets/sprites/wi_boom.webp", "wi_club": "assets/sprites/wi_club.webp"};
 Object.assign(TEX,{
   swamp_far:'assets/bg/swamp_far.webp', swamp_mid:'assets/bg/swamp_mid.webp', swamp_front:'assets/bg/swamp_front.webp',
@@ -237,13 +225,9 @@ function genLevel(idx){
   return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cuts,flagX,boss:m.boss,biome:m.biome};
 }
 
-// оборачиваем колбэки сцены, чтобы поймать настоящий текст ошибки (иначе CORS прячет его за «Script error.»)
-function guard(fn){ return function(){ try{ return fn.apply(this,arguments); }
-  catch(e){ if(window.__showErr) window.__showErr('['+fn.name+'] '+((e&&e.stack)||e)); throw e; } }; }
 function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:800,height:450},
-  physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},
-  scene:{preload:guard(preload),create:guard(create),update:guard(update)}};}
+  physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
   const sc=game?(activeScene||game.scene.getScene('default')):null;
