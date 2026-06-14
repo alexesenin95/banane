@@ -1,6 +1,17 @@
 /* Банановый поход — игровая логика (Phaser 3).
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
+/* --- временная диагностика: метка сборки + видимый ловец ошибок --- */
+(function(){ const BUILD='build-3 · restart+heroScale · 2026-06-14';
+  window.__BUILD=BUILD; try{ console.log('BANANE',BUILD); }catch(e){}
+  function showErr(msg){ let d=document.getElementById('__err');
+    if(!d){ d=document.createElement('div'); d.id='__err';
+      d.style.cssText='position:fixed;left:6px;right:6px;bottom:6px;z-index:99999;background:#b00020;color:#fff;font:12px/1.4 monospace;padding:8px 10px;white-space:pre-wrap;max-height:48vh;overflow:auto;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.5)';
+      (document.body||document.documentElement).appendChild(d); }
+    d.textContent='⚠ '+BUILD+'\n'+msg; }
+  window.addEventListener('error',e=>showErr((e.error&&e.error.stack)||e.message||String(e)));
+  window.addEventListener('unhandledrejection',e=>showErr('promise: '+((e.reason&&e.reason.stack)||e.reason||e)));
+})();
 const TEX = {"p_idle": "assets/sprites/p_idle.webp", "p_run1": "assets/sprites/p_run1.webp", "p_run2": "assets/sprites/p_run2.webp", "p_run3": "assets/sprites/p_run3.webp", "p_jump": "assets/sprites/p_jump.webp", "p_attack": "assets/sprites/p_attack.webp", "s1": "assets/sprites/s1.webp", "s2": "assets/sprites/s2.webp", "orc1": "assets/sprites/orc1.webp", "orc2": "assets/sprites/orc2.webp", "orc3": "assets/sprites/orc3.webp", "spider": "assets/sprites/spider.webp", "proj": "assets/sprites/proj.webp", "banana": "assets/sprites/banana.webp", "flag": "assets/sprites/flag.webp", "tile": "assets/sprites/tile.webp", "bg_far": "assets/bg/bg_far.webp", "bg_mid": "assets/bg/bg_mid.webp", "bg_front": "assets/bg/bg_front.webp", "k_thrower": "assets/sprites/k_thrower.webp", "k_archer": "assets/sprites/k_archer.webp", "k_shield": "assets/sprites/k_shield.webp", "k_berserk": "assets/sprites/k_berserk.webp", "e_knife": "assets/sprites/e_knife.webp", "e_arrow": "assets/sprites/e_arrow.webp", "b_spikes": "assets/sprites/b_spikes.webp", "b_thorn": "assets/sprites/b_thorn.webp", "b_stone": "assets/sprites/b_stone.webp", "b_palisade": "assets/sprites/b_palisade.webp", "b_gate": "assets/sprites/b_gate.webp", "wi_boom2": "assets/sprites/wi_boom2.webp", "wi_club2": "assets/sprites/wi_club2.webp", "wi_boom": "assets/sprites/wi_boom.webp", "wi_club": "assets/sprites/wi_club.webp"};
 Object.assign(TEX,{
   swamp_far:'assets/bg/swamp_far.webp', swamp_mid:'assets/bg/swamp_mid.webp', swamp_front:'assets/bg/swamp_front.webp',
@@ -27,6 +38,7 @@ const HEROES={
 };
 let selectedHero='mono';
 const HK=()=>HEROES[selectedHero];
+const HERO_DH={ orang:84 };   // целевая экранная высота героя в px (под размер орков); моно — нативный размер
 const ADMIN=true;                 // dev-only level switching; set false for players
 const STOMP_DMG=3;
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
@@ -227,8 +239,10 @@ function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a
   physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
-  if(!game){ game=new Phaser.Game(makeConfig()); return; }
-  const sc=activeScene||game.scene.getScene('default'); sc.scene.restart(); }
+  const sc=game?(activeScene||game.scene.getScene('default')):null;
+  if(game&&sc&&sc.scene){ sc.scene.restart(); return; }
+  if(game){ try{game.destroy(true);}catch(e){} game=null; }
+  game=new Phaser.Game(makeConfig()); }
 function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=3; currentLevel=0; playedCine={};
   upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startInstance(); }
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
@@ -277,6 +291,7 @@ function create(){
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
+  const _hdh=HERO_DH[selectedHero]; if(_hdh&&this.player.height) this.player.setScale(_hdh/this.player.height);   // ужать крупного героя (орангутан) до размера орков
   const pw=this.player.width||PW, ph=this.player.height||PHH;
   this.player.body.setSize(pw*0.3,ph*0.8).setOffset(pw*0.35,ph*0.2);
   this.physics.add.collider(this.player,this.platforms);
