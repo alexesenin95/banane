@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Банановый поход</title>
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js" crossorigin="anonymous"></script>
@@ -74,6 +74,23 @@
   <div id="endScreen" class="overlay">
     <h1 id="endTitle"></h1><p id="endScore">Очки: 0</p><button class="btn" id="endBtn">Дальше</button>
   </div>
+  <!-- сенсорное управление (показывается только на тач-устройствах во время игры) -->
+  <div id="touch" aria-hidden="true">
+    <div class="tc tc-move">
+      <button class="tbtn" id="btnLeft" aria-label="Влево">◀</button>
+      <button class="tbtn" id="btnRight" aria-label="Вправо">▶</button>
+    </div>
+    <div class="tc tc-act">
+      <button class="tbtn tbig" id="btnAtk" aria-label="Удар">✦</button>
+      <button class="tbtn tbig" id="btnJump" aria-label="Прыжок">▲</button>
+    </div>
+    <div class="tc tc-aux">
+      <button class="tbtn tsm" id="btnWeap" aria-label="Сменить оружие">⇄</button>
+      <button class="tbtn tsm" id="btnArmor" aria-label="Броня">🛡</button>
+      <button class="tbtn tsm" id="btnInv" aria-label="Инвентарь">☰</button>
+    </div>
+  </div>
+  <div id="rotate"><div class="rot-i">📱</div><p>Поверни телефон<br>в альбомную ориентацию</p></div>
 </div>
 <script src="js/game.js"></script>
 </body>

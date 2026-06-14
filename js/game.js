@@ -2,7 +2,7 @@
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
 /* --- временная диагностика: метка сборки + видимый ловец ошибок --- */
-(function(){ const BUILD='build-5 · heroSize62+spriteClean · 2026-06-14';
+(function(){ const BUILD='build-6 · mobile-adaptive · 2026-06-14';
   window.__BUILD=BUILD; try{ console.log('BANANE',BUILD); }catch(e){}
   function showErr(msg){ let d=document.getElementById('__err');
     if(!d){ d=document.createElement('div'); d.id='__err';
@@ -58,6 +58,7 @@ const WEAPON_LIST=[
 let currentWeapon='boomerang', upgraded=false;
 let game=null, chosenWeapon=null, currentLevel=0;
 let score=0, lives=3, gameOver=false, paused=false, pauseReason=null;
+const TOUCH={left:false,right:false,jump:false};   // состояние сенсорных кнопок (читается в update)
 const show=id=>document.getElementById(id).classList.add('show');
 const hide=id=>document.getElementById(id).classList.remove('show');
 
@@ -411,10 +412,10 @@ function update(){
   if(ADMIN){ if(Phaser.Input.Keyboard.JustDown(this.nlk)){ currentLevel=Math.min(currentLevel+1,META.length-1); gameOver=false; this.scene.restart(); return; }
              if(Phaser.Input.Keyboard.JustDown(this.plk)){ currentLevel=Math.max(currentLevel-1,0); gameOver=false; this.scene.restart(); return; } }
   for(const cut of this.cuts){ if(!cut.done && p.x>=cut.x){ cut.done=true; startCut(this,cut); return; } }
-  const left=c.left.isDown,right=c.right.isDown;
+  const left=c.left.isDown||TOUCH.left, right=c.right.isDown||TOUCH.right;
   if(left){p.setVelocityX(-210);p.setFlipX(true);} else if(right){p.setVelocityX(210);p.setFlipX(false);} else p.setVelocityX(0);
   const onGround=p.body.blocked.down||p.body.touching.down;
-  if((c.up.isDown||this.spaceKey.isDown)&&onGround) p.setVelocityY(this.jumpVel);
+  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround) p.setVelocityY(this.jumpVel);
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
   if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);}
   if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);}
@@ -494,3 +495,27 @@ function pitDeath(scene){ const p=scene.player; if(p.armor){ p.setVelocity(0,0);
   p.setVelocity(0,0); p.setPosition(scene.cpX,180); scene.cameras.main.flash(160,120,160,255);
   p.invuln=true; p.setAlpha(0.5); scene.time.delayedCall(900,()=>{ if(p.active&&!p.armor){p.invuln=false;p.setAlpha(1);} }); }
 function updateHud(s){ s.hud.setText('Очки: '+score+'    Жизни: '+lives+'    Уровень: '+(currentLevel+1)); }
+
+/* ---- сенсорное управление (мобильные) ---- */
+function setupTouch(){
+  const coarse=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
+  if(!(coarse||('ontouchstart'in window)||navigator.maxTouchPoints>0)) return;  // только тач-устройства
+  document.body.classList.add('touch');
+  const hold=(id,prop)=>{ const el=document.getElementById(id); if(!el)return;
+    const on=e=>{ e.preventDefault(); TOUCH[prop]=true; };
+    const off=e=>{ e.preventDefault(); TOUCH[prop]=false; };
+    el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off);
+    el.addEventListener('pointercancel',off); el.addEventListener('pointerleave',off); };
+  hold('btnLeft','left'); hold('btnRight','right'); hold('btnJump','jump');
+  const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
+    el.addEventListener('pointerdown',e=>{ e.preventDefault(); fn(); }); };
+  tap('btnAtk',()=>{ if(activeScene) doAttack(activeScene); });
+  tap('btnWeap',()=>{ currentWeapon=currentWeapon==='boomerang'?'club':'boomerang'; if(activeScene)updateWeaponHUD(activeScene); });
+  tap('btnArmor',()=>{ if(activeScene) activateArmor(activeScene); });
+  tap('btnInv',()=>{ if(pauseReason==='inv') closeInventory(); else openInventory(); });
+  // сброс зажатий при сворачивании/потере фокуса — чтобы кнопки не «залипали»
+  const clear=()=>{ TOUCH.left=TOUCH.right=TOUCH.jump=false; };
+  window.addEventListener('blur',clear);
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden)clear(); });
+}
+setupTouch();
