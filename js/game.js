@@ -444,14 +444,21 @@ function spawnEnemy(scene,e){
   else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); }
   else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; }
   else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; }
+  // масштаб по уровню: чем выше уровень — тем крепче и быстрее враги (боссам HP растёт мягче, чтобы бой не затягивался)
+  const i=currentLevel;
+  const hpMul=s.isBoss?(1+i*0.05):(1+i*0.075);   // обычные ×до ~2.4, боссы ×до ~1.95 к 20-му уровню
+  const spdMul=Math.min(1.6,1+i*0.035);          // скорость/преследование — до +60%
+  s.hp=Math.max(1,Math.round(s.hp*hpMul));
+  s.speed=Math.round(s.speed*spdMul); if(s.chase)s.chase=Math.round(s.chase*spdMul);
   s.maxhp=s.hp; return s;
 }
 function spawnSquad(scene,list){ list.forEach(e=>{ const s=spawnEnemy(scene,e); if(s){ s.setAlpha(0); scene.tweens.add({targets:s,alpha:1,duration:280}); } }); }
+const projScale=()=>Math.min(1.6,1+currentLevel*0.035);   // снаряды быстрее на высоких уровнях (труднее увернуться)
 function fireAt(scene,e,tex,speed){ const dir=scene.player.x<e.x?-1:1;
   const pr=scene.eprojs.create(e.x+dir*16,e.y-4,tex); pr.body.setAllowGravity(false);
-  pr.setVelocityX(dir*speed); pr.setFlipX(dir<0); pr.setDepth(5); pr.born=scene.time.now; if(tex==='e_knife')pr.setAngularVelocity(dir*700); }
+  pr.setVelocityX(dir*speed*projScale()); pr.setFlipX(dir<0); pr.setDepth(5); pr.born=scene.time.now; if(tex==='e_knife')pr.setAngularVelocity(dir*700); }
 function fireRock(scene,e){ const dir=scene.player.x<e.x?-1:1;
-  const r=scene.rocks.create(e.x+dir*30,e.y+8,'boulder'); r.setVelocityX(dir*235); r.setAngularVelocity(dir*330);
+  const r=scene.rocks.create(e.x+dir*30,e.y+8,'boulder'); r.setVelocityX(dir*235*projScale()); r.setAngularVelocity(dir*330);
   r.setBounce(0.12); r.setDepth(5); r.born=scene.time.now; }
 
 function update(){
