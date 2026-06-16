@@ -254,16 +254,16 @@ function genLevel(idx){
   x=650;
   while(x<W-650){ const y=288+Math.floor(R()*52);           // reachable height range
     if(!inGap(x)){ platforms.push([x,y]); if(R()<0.5) bananas.push([x,y-30]);
-      if(R()<0.4) enemies.push({type:pickType(m.pool,R),x,y:y-46,min:x-70,max:x+70}); }
+      if(R()<0.4) enemies.push({type:pickType(m.pool,R),x,y:y-46,min:x-40,max:x+40}); }   // патруль в пределах платформы (не свалиться)
     x+=520+Math.floor(R()*340); }
   const towerTops=[]; let tx=2600;
   while(tx<W-1600){ if(!inGap(tx)){ const steps=3+Math.floor(R()*2); let sx=tx, sy=336;
     for(let i=0;i<steps;i++){ platforms.push([sx,sy]);
-      if(i>0 && R()<0.4) enemies.push({type:pickType(m.pool,R),x:sx,y:sy-46,min:sx-50,max:sx+50});
+      if(i>0 && R()<0.4) enemies.push({type:pickType(m.pool,R),x:sx,y:sy-46,min:sx-12,max:sx+12});   // узкая башенная плитка — мелкий шаг
       sx += (R()<0.5?-1:1)*(82+Math.floor(R()*20)); sy=Math.max(150,sy-(96+Math.floor(R()*18))); }  // gentler, reachable
     towerTops.push([sx,sy]); } tx+=3000+Math.floor(R()*1100); }
   x=420; while(x<W-300){ bananas.push([x,360]); x+=470+Math.floor(R()*300); }
-  x=820; while(x<W-1000){ let ex=x; if(inGap(ex))ex+=170; enemies.push({type:pickType(m.pool,R),x:ex,y:300,min:ex-220,max:ex+220}); x+=720+Math.floor(R()*420); }
+  x=820; while(x<W-1000){ let ex=x; if(inGap(ex))ex+=170; enemies.push({type:pickType(m.pool,R),x:ex,y:300,min:ex-260,max:ex+260}); x+=720+Math.floor(R()*420); }
   towerTops.forEach((t,i)=>{ if(i%2===0 && lifeUps.length<3) lifeUps.push([t[0],t[1]-26]); else bananas.push([t[0],t[1]-26]); });
   while(lifeUps.length<2 && towerTops.length){ const t=towerTops.pop(); lifeUps.push([t[0],t[1]-26]); }
   let bx=1300;
@@ -453,6 +453,11 @@ function spawnEnemy(scene,e){
   s.maxhp=s.hp; return s;
 }
 function spawnSquad(scene,list){ list.forEach(e=>{ const s=spawnEnemy(scene,e); if(s){ s.setAlpha(0); scene.tweens.add({targets:s,alpha:1,duration:280}); } }); }
+// патруль по участку [mn,mx]: всегда в движении (фикс «стояния»), разворот у границ и перед пропастью
+function patrolMove(scene,e,mn,mx){ const v=e.body.velocity.x; let dir=v<-1?-1:(v>1?1:-1);
+  if(e.x<=mn)dir=1; else if(e.x>=mx)dir=-1; else if(Math.abs(v)<5)dir=-1;
+  if(scene.cpInGap&&scene.cpInGap(e.x+dir*34))dir=-dir;   // не уходить в пропасть
+  e.setVelocityX(dir*e.speed); e.setFlipX(dir<0); }
 const projScale=()=>Math.min(1.6,1+currentLevel*0.035);   // снаряды быстрее на высоких уровнях (труднее увернуться)
 function fireAt(scene,e,tex,speed){ const dir=scene.player.x<e.x?-1:1;
   const pr=scene.eprojs.create(e.x+dir*16,e.y-4,tex); pr.body.setAllowGravity(false);
@@ -487,21 +492,21 @@ function update(){
     if(e.y>720){ if(e.isBoss)this.boss=null; e.disableBody(true,true); return; }
     const t=e.getData('type'),mn=e.getData('min'),mx=e.getData('max');
     const dx=p.x-e.x, dy=p.y-e.y, adx=Math.abs(dx);
-    if(t==='shrimp'){ if(e.x<=mn){e.setVelocityX(e.speed);e.setFlipX(false);} else if(e.x>=mx){e.setVelocityX(-e.speed);e.setFlipX(true);} }
+    if(t==='shrimp'){ patrolMove(this,e,mn,mx); }
     else if(t==='boss'){ if(dx<-8&&e.x>mn)e.setVelocityX(-e.speed); else if(dx>8&&e.x<mx)e.setVelocityX(e.speed); else e.setVelocityX(0); e.setFlipX(dx<0); }
     else if(t==='thrower'||t==='archer'){ const rng=t==='archer'?560:380; e.setFlipX(dx<0);
       if(adx<rng&&Math.abs(dy)<150){ if(adx<120){ e.setVelocityX(dx<0?e.speed:-e.speed); }
         else { e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+(t==='archer'?1500:1100); fireAt(this,e,t==='archer'?'e_arrow':'e_knife',t==='archer'?370:270);} } }
-      else { if(e.x<=mn){e.setVelocityX(e.speed);} else if(e.x>=mx){e.setVelocityX(-e.speed);} } }
+      else { patrolMove(this,e,mn,mx); } }
     else if(t==='troll_boulder'){ e.setFlipX(dx<0); const rng=540;
       if(adx<rng&&Math.abs(dy)<175){ if(adx<175){ e.setVelocityX(dx<0?e.speed:-e.speed); }      // отступает
         else { e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+2400; fireRock(this,e); } } }
-      else { if(e.x<=mn){e.setVelocityX(e.speed);} else if(e.x>=mx){e.setVelocityX(-e.speed);} } }
+      else { patrolMove(this,e,mn,mx); } }
     else { if(t==='shield'){ if(now>e.nextInv){ e.inv=true; e.invEnd=now+1500; e.nextInv=now+3800; e.setTint(0x9fd8ff); } if(e.inv&&now>e.invEnd){ e.inv=false; e.clearTint(); } }
       const det=440, csp=e.chase||150;
       if(adx<det&&Math.abs(dy)<150){ e.setVelocityX(dx<0?-csp:csp); e.setFlipX(dx<0);
         if(t==='orc'){ if(adx<58){e.anims.stop();e.setTexture('orc3');} else { if(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!=='orcwalk'))e.play('orcwalk'); } } }
-      else { if(e.x<=mn){e.setVelocityX(e.speed);e.setFlipX(false);} else if(e.x>=mx){e.setVelocityX(-e.speed);e.setFlipX(true);}
+      else { patrolMove(this,e,mn,mx);
         if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!=='orcwalk')))e.play('orcwalk'); } }
   });
 
