@@ -9,7 +9,8 @@ Object.assign(TEX,{
   b_stone_swamp:'assets/sprites/b_stone_swamp.webp', b_palisade_swamp:'assets/sprites/b_palisade_swamp.webp',
   b_gate_swamp:'assets/sprites/b_gate_swamp.webp',
   t_club:'assets/sprites/t_club.webp', t_bone:'assets/sprites/t_bone.webp', t_boulder:'assets/sprites/t_boulder.webp',
-  boss_troll:'assets/sprites/boss_troll.webp', boulder:'assets/sprites/boulder.webp'
+  boss_troll:'assets/sprites/boss_troll.webp', boulder:'assets/sprites/boulder.webp',
+  sky_far:'assets/bg/sky_far.webp', sky_mid:'assets/bg/sky_mid.webp', sky_front:'assets/bg/sky_front.webp'
 });
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
@@ -225,7 +226,9 @@ const BIOMES={
     boss:'boss_troll',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
   cave:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0x8a90a8,sky:0x0a0a16},
   ice:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xc2d6e6,sky:0x14283a},
-  sky:{ref:'jungle',boss:'boss_troll',bossName:'ВОЕНАЧАЛЬНИК',tint:0xdfe7f2,sky:0x18263e}
+  sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile',
+    obst:{spikes:'b_spikes',thorn:'b_thorn',stone:'b_stone',palisade:'b_palisade',gate:'b_gate'},
+    boss:'boss_troll',bossName:'ВОЕНАЧАЛЬНИК',tint:0xffffff,sky:0xbcd6ff}
 };
 function vis(name){ const b=BIOMES[name]; return b.far?b:BIOMES[b.ref]; }   // источник текстур
 const POOLS={
