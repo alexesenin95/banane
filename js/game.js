@@ -16,7 +16,8 @@ Object.assign(TEX,{
   b_stone_sky:'assets/sprites/b_stone_sky.webp', b_palisade_sky:'assets/sprites/b_palisade_sky.webp',
   b_gate_sky:'assets/sprites/b_gate_sky.webp',
   k_berserk_swamp:'assets/sprites/k_berserk_swamp.webp', k_thrower_swamp:'assets/sprites/k_thrower_swamp.webp',
-  k_archer_swamp:'assets/sprites/k_archer_swamp.webp', k_shield_swamp:'assets/sprites/k_shield_swamp.webp'
+  k_archer_swamp:'assets/sprites/k_archer_swamp.webp', k_shield_swamp:'assets/sprites/k_shield_swamp.webp',
+  orc1_swamp:'assets/sprites/orc1_swamp.webp', orc2_swamp:'assets/sprites/orc2_swamp.webp', orc3_swamp:'assets/sprites/orc3_swamp.webp'
 });
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
@@ -357,6 +358,11 @@ function create(){
   if(!this.anims.exists('swim')){
     this.anims.create({key:'swim',frames:[{key:'s1'},{key:'s2'}],frameRate:5,repeat:-1});
     this.anims.create({key:'orcwalk',frames:[{key:'orc1'},{key:'orc2'}],frameRate:6,repeat:-1}); }
+  // ходьба/удар базового орка под биом (если есть свой арт, напр. orc1_swamp)
+  if(this.biome&&this.textures.exists('orc1_'+this.biome)&&!this.anims.exists('orcwalk_'+this.biome))
+    this.anims.create({key:'orcwalk_'+this.biome,frames:[{key:'orc1_'+this.biome},{key:'orc2_'+this.biome}],frameRate:6,repeat:-1});
+  this.orcWalk=(this.biome&&this.anims.exists('orcwalk_'+this.biome))?'orcwalk_'+this.biome:'orcwalk';
+  this.orcAtk=(this.biome&&this.textures.exists('orc3_'+this.biome))?'orc3_'+this.biome:'orc3';
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
   cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],TKEY); });
@@ -447,7 +453,7 @@ function spawnEnemy(scene,e){
   const s=scene.enemies.create(e.x,e.y,tex); s.setData('type',k); s.setData('min',e.min); s.setData('max',e.max);
   const W=s.width,H=s.height;
   if(k==='shrimp'){ s.hp=1; s.speed=55; s.body.setSize(W*0.72,H*0.62).setOffset(W*0.14,H*0.38); s.setVelocityX(-55); s.play('swim'); }
-  else if(k==='orc'){ s.hp=12; s.speed=95; s.chase=165; s.body.setSize(W*0.42,H*0.82).setOffset(W*0.29,H*0.18); s.setVelocityX(-95); s.play('orcwalk'); }
+  else if(k==='orc'){ s.hp=12; s.speed=95; s.chase=165; s.body.setSize(W*0.42,H*0.82).setOffset(W*0.29,H*0.18); s.setVelocityX(-95); s.play(scene.orcWalk); }
   else if(k==='berserk'){ s.hp=16; s.speed=110; s.chase=235; s.body.setSize(W*0.5,H*0.84).setOffset(W*0.25,H*0.16); }
   else if(k==='shield'){ s.hp=18; s.speed=65; s.chase=95; s.body.setSize(W*0.5,H*0.82).setOffset(W*0.25,H*0.18); s.nextInv=now+2200; }
   else if(k==='thrower'){ s.hp=8; s.speed=95; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+800; }
@@ -516,9 +522,9 @@ function update(){
     else { if(t==='shield'){ if(now>e.nextInv){ e.inv=true; e.invEnd=now+1500; e.nextInv=now+3800; e.setTint(0x9fd8ff); } if(e.inv&&now>e.invEnd){ e.inv=false; e.clearTint(); } }
       const det=440, csp=e.chase||150;
       if(adx<det&&Math.abs(dy)<150){ e.setVelocityX(dx<0?-csp:csp); e.setFlipX(dx<0);
-        if(t==='orc'){ if(adx<58){e.anims.stop();e.setTexture('orc3');} else { if(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!=='orcwalk'))e.play('orcwalk'); } } }
+        if(t==='orc'){ if(adx<58){e.anims.stop();e.setTexture(this.orcAtk);} else { if(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk))e.play(this.orcWalk); } } }
       else { patrolMove(this,e,mn,mx);
-        if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!=='orcwalk')))e.play('orcwalk'); } }
+        if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk)))e.play(this.orcWalk); } }
   });
 
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
