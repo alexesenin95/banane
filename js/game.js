@@ -29,10 +29,13 @@ Object.assign(TEX,{
   k_archer_sky:'assets/sprites/k_archer_sky.webp', k_archer_sky2:'assets/sprites/k_archer_sky2.webp',
   k_shield_sky:'assets/sprites/k_shield_sky.webp', k_shield_sky2:'assets/sprites/k_shield_sky2.webp',
   orc1_ice:'assets/sprites/orc1_ice.webp', orc2_ice:'assets/sprites/orc2_ice.webp', orc3_ice:'assets/sprites/orc3_ice.webp',
-  orc1_sky:'assets/sprites/orc1_sky.webp', orc2_sky:'assets/sprites/orc2_sky.webp', orc3_sky:'assets/sprites/orc3_sky.webp'
+  orc1_sky:'assets/sprites/orc1_sky.webp', orc2_sky:'assets/sprites/orc2_sky.webp', orc3_sky:'assets/sprites/orc3_sky.webp',
+  k_berserk2:'assets/sprites/k_berserk2.webp', k_thrower2:'assets/sprites/k_thrower2.webp',
+  k_archer2:'assets/sprites/k_archer2.webp', k_shield2:'assets/sprites/k_shield2.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
+['berserk','thrower','archer','shield'].forEach(u=>{ ENEMY_ANIMS['k_'+u]=['k_'+u,'k_'+u+'2']; });   // джунгли (без суффикса)
 ['swamp','ice','sky'].forEach(b=>['berserk','thrower','archer','shield'].forEach(u=>{
   ENEMY_ANIMS['k_'+u+'_'+b]=['k_'+u+'_'+b, 'k_'+u+'_'+b+'2']; }));
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
@@ -53,7 +56,7 @@ let selectedHero='mono';
 const HK=()=>HEROES[selectedHero];
 const HERO_DH={ orang:62 };   // целевая экранная высота героя в px (= габарит старой обезьяны, чтобы пролазил в те же щели); моно — нативный размер
 const ADMIN=true;                 // dev-only level switching; set false for players
-const STOMP_DMG=3;
+const STOMP_DMG=6;   // прыжок сверху — ощутимый урон
 const HERO_MAXHP=100, START_LIVES=3;          // у героя полоска HP; жизни = число респаунов на чекпоинте
 const DMG={contact:22, proj:16, hazard:26};   // урон по герою от разных источников
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
@@ -395,8 +398,9 @@ function create(){
   const o1=biomeTex(this,'orc1'), o2=biomeTex(this,'orc2'), o3=biomeTex(this,'orc3'), owKey='ow_'+o1;
   if(!this.anims.exists(owKey)) this.anims.create({key:owKey,frames:[{key:o1},{key:o2}],frameRate:6,repeat:-1});
   this.orcWalk=owKey; this.orcAtk=o3;
-  for(const tex in ENEMY_ANIMS){ if(!this.anims.exists('A_'+tex) && this.textures.exists(tex))
-    this.anims.create({key:'A_'+tex,frames:ENEMY_ANIMS[tex].map(k=>({key:k})),frameRate:4,repeat:-1}); }
+  for(const tex in ENEMY_ANIMS){ const fr=ENEMY_ANIMS[tex];
+    if(!this.anims.exists('A_'+tex) && fr.every(k=>this.textures.exists(k)))
+      this.anims.create({key:'A_'+tex,frames:fr.map(k=>({key:k})),frameRate:4,repeat:-1}); }
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
   cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],TKEY); });
@@ -570,12 +574,11 @@ function update(){
         else if(adx>DZ){ e.setVelocityX(dx<0?e.speed:-e.speed); } else e.setVelocityX(0); }
       else patrolMove(this,e,mn,mx); }
     else { if(t==='shield'){ if(now>e.nextInv){ e.inv=true; e.invEnd=now+1500; e.nextInv=now+3800; e.setTint(0x9fd8ff); } if(e.inv&&now>e.invEnd){ e.inv=false; e.clearTint(); } }
-      const det=440, csp=e.chase||150;
-      if(adx<det && !above && Math.abs(dy)<150){
-        if(adx>DZ){ e.setVelocityX(dx<0?-csp:csp); } else { e.setVelocityX(0); } e.setFlipX(dx<0);
-        if(t==='orc'){ if(adx<58){e.anims.stop();e.setTexture(this.orcAtk);} else { if(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk))e.play(this.orcWalk); } } }
-      else { patrolMove(this,e,mn,mx);
-        if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk)))e.play(this.orcWalk); } }
+      const det=440, csp=e.chase||150, overhead=adx<34 && dy<-12 && dy>-175;
+      if(overhead){ e.setVelocityX(0); e.setFlipX(dx<0); }                          // герой прямо сверху — стоим, даём стомпнуть
+      else if(adx>=40 && adx<det && !above && Math.abs(dy)<150){ e.setVelocityX(dx<0?-csp:csp); e.setFlipX(dx<0); }
+      else patrolMove(this,e,mn,mx);                                                // вплотную/далеко/высоко — ровное движение (без дёрганья)
+      if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk)))e.play(this.orcWalk); }   // орк всегда анимирован (без застывания на ударе)
   });
 
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
