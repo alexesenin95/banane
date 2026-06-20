@@ -19,13 +19,22 @@ Object.assign(TEX,{
   k_archer_swamp:'assets/sprites/k_archer_swamp.webp', k_shield_swamp:'assets/sprites/k_shield_swamp.webp',
   orc1_swamp:'assets/sprites/orc1_swamp.webp', orc2_swamp:'assets/sprites/orc2_swamp.webp', orc3_swamp:'assets/sprites/orc3_swamp.webp',
   k_berserk_swamp2:'assets/sprites/k_berserk_swamp2.webp', k_thrower_swamp2:'assets/sprites/k_thrower_swamp2.webp',
-  k_archer_swamp2:'assets/sprites/k_archer_swamp2.webp', k_shield_swamp2:'assets/sprites/k_shield_swamp2.webp'
+  k_archer_swamp2:'assets/sprites/k_archer_swamp2.webp', k_shield_swamp2:'assets/sprites/k_shield_swamp2.webp',
+  k_berserk_ice:'assets/sprites/k_berserk_ice.webp', k_berserk_ice2:'assets/sprites/k_berserk_ice2.webp',
+  k_thrower_ice:'assets/sprites/k_thrower_ice.webp', k_thrower_ice2:'assets/sprites/k_thrower_ice2.webp',
+  k_archer_ice:'assets/sprites/k_archer_ice.webp', k_archer_ice2:'assets/sprites/k_archer_ice2.webp',
+  k_shield_ice:'assets/sprites/k_shield_ice.webp', k_shield_ice2:'assets/sprites/k_shield_ice2.webp',
+  k_berserk_sky:'assets/sprites/k_berserk_sky.webp', k_berserk_sky2:'assets/sprites/k_berserk_sky2.webp',
+  k_thrower_sky:'assets/sprites/k_thrower_sky.webp', k_thrower_sky2:'assets/sprites/k_thrower_sky2.webp',
+  k_archer_sky:'assets/sprites/k_archer_sky.webp', k_archer_sky2:'assets/sprites/k_archer_sky2.webp',
+  k_shield_sky:'assets/sprites/k_shield_sky.webp', k_shield_sky2:'assets/sprites/k_shield_sky2.webp',
+  orc1_ice:'assets/sprites/orc1_ice.webp', orc2_ice:'assets/sprites/orc2_ice.webp', orc3_ice:'assets/sprites/orc3_ice.webp',
+  orc1_sky:'assets/sprites/orc1_sky.webp', orc2_sky:'assets/sprites/orc2_sky.webp', orc3_sky:'assets/sprites/orc3_sky.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
-const ENEMY_ANIMS={
-  k_berserk_swamp:['k_berserk_swamp','k_berserk_swamp2'], k_thrower_swamp:['k_thrower_swamp','k_thrower_swamp2'],
-  k_archer_swamp:['k_archer_swamp','k_archer_swamp2'], k_shield_swamp:['k_shield_swamp','k_shield_swamp2']
-};
+const ENEMY_ANIMS={};
+['swamp','ice','sky'].forEach(b=>['berserk','thrower','archer','shield'].forEach(u=>{
+  ENEMY_ANIMS['k_'+u+'_'+b]=['k_'+u+'_'+b, 'k_'+u+'_'+b+'2']; }));
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
@@ -371,7 +380,8 @@ function create(){
     hg.fillStyle(0xff4d6d); hg.fillCircle(8,9,7); hg.fillCircle(18,9,7); hg.fillTriangle(2,12,24,12,13,27);
     hg.fillStyle(0xffffff,0.7); hg.fillCircle(6,7,2.2); hg.generateTexture('life',26,28); hg.destroy(); }
   const bc=BIOMES[cfg.biome], bvz=vis(cfg.biome), dim=bc.tint;
-  this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName}; this.biome=bc.ref||cfg.biome;  // визуальный биом (пещеры/ледник переиспользуют арт топей)
+  this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName};
+  this.bchain=[cfg.biome, bc.ref].filter(Boolean);   // выбор арта врага: свой биом → ref-биом → базовый (джунгли)
   this.bgFar=this.add.tileSprite(400,225,800,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
   this.bgMid=this.add.tileSprite(400,225,800,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
   this.bgFront=this.add.tileSprite(400,225,800,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
@@ -381,11 +391,10 @@ function create(){
   if(!this.anims.exists('swim')){
     this.anims.create({key:'swim',frames:[{key:'s1'},{key:'s2'}],frameRate:5,repeat:-1});
     this.anims.create({key:'orcwalk',frames:[{key:'orc1'},{key:'orc2'}],frameRate:6,repeat:-1}); }
-  // ходьба/удар базового орка под биом (если есть свой арт, напр. orc1_swamp)
-  if(this.biome&&this.textures.exists('orc1_'+this.biome)&&!this.anims.exists('orcwalk_'+this.biome))
-    this.anims.create({key:'orcwalk_'+this.biome,frames:[{key:'orc1_'+this.biome},{key:'orc2_'+this.biome}],frameRate:6,repeat:-1});
-  this.orcWalk=(this.biome&&this.anims.exists('orcwalk_'+this.biome))?'orcwalk_'+this.biome:'orcwalk';
-  this.orcAtk=(this.biome&&this.textures.exists('orc3_'+this.biome))?'orc3_'+this.biome:'orc3';
+  // ходьба/удар базового орка под биом (цепочка: свой биом → ref → базовый)
+  const o1=biomeTex(this,'orc1'), o2=biomeTex(this,'orc2'), o3=biomeTex(this,'orc3'), owKey='ow_'+o1;
+  if(!this.anims.exists(owKey)) this.anims.create({key:owKey,frames:[{key:o1},{key:o2}],frameRate:6,repeat:-1});
+  this.orcWalk=owKey; this.orcAtk=o3;
   for(const tex in ENEMY_ANIMS){ if(!this.anims.exists('A_'+tex) && this.textures.exists(tex))
     this.anims.create({key:'A_'+tex,frames:ENEMY_ANIMS[tex].map(k=>({key:k})),frameRate:4,repeat:-1}); }
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
@@ -478,13 +487,15 @@ function create(){
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
 }
 
+// текстура врага по цепочке биомов: свой биом → ref-биом → базовая (если своего арта нет)
+function biomeTex(scene,base){ const ch=scene.bchain||[]; for(const b of ch){ const v=base+'_'+b; if(scene.textures.exists(v))return v; } return base; }
 function spawnEnemy(scene,e){
   const k=e.type, now=scene.time.now;
   const base={shrimp:'s1',orc:'orc1',thrower:'k_thrower',archer:'k_archer',shield:'k_shield',berserk:'k_berserk',
     troll_club:'t_club',troll_bone:'t_bone',troll_boulder:'t_boulder',
     boss:(scene.biomeCfg&&scene.biomeCfg.boss)||'spider'}[k]||'orc1';
   // текстура по биому: если есть свой арт врага (например k_berserk_swamp) — берём его, иначе общий
-  let tex=base; if(scene.biome){ const v=base+'_'+scene.biome; if(scene.textures.exists(v))tex=v; }
+  let tex=biomeTex(scene,base);
   const s=scene.enemies.create(e.x,e.y,tex); s.setData('type',k); s.setData('min',e.min); s.setData('max',e.max);
   const W=s.width,H=s.height;
   if(k==='shrimp'){ s.hp=1; s.speed=55; s.body.setSize(W*0.72,H*0.62).setOffset(W*0.14,H*0.38); s.setVelocityX(-55); s.play('swim'); }
