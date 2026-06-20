@@ -17,8 +17,15 @@ Object.assign(TEX,{
   b_gate_sky:'assets/sprites/b_gate_sky.webp',
   k_berserk_swamp:'assets/sprites/k_berserk_swamp.webp', k_thrower_swamp:'assets/sprites/k_thrower_swamp.webp',
   k_archer_swamp:'assets/sprites/k_archer_swamp.webp', k_shield_swamp:'assets/sprites/k_shield_swamp.webp',
-  orc1_swamp:'assets/sprites/orc1_swamp.webp', orc2_swamp:'assets/sprites/orc2_swamp.webp', orc3_swamp:'assets/sprites/orc3_swamp.webp'
+  orc1_swamp:'assets/sprites/orc1_swamp.webp', orc2_swamp:'assets/sprites/orc2_swamp.webp', orc3_swamp:'assets/sprites/orc3_swamp.webp',
+  k_berserk_swamp2:'assets/sprites/k_berserk_swamp2.webp', k_thrower_swamp2:'assets/sprites/k_thrower_swamp2.webp',
+  k_archer_swamp2:'assets/sprites/k_archer_swamp2.webp', k_shield_swamp2:'assets/sprites/k_shield_swamp2.webp'
 });
+// враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
+const ENEMY_ANIMS={
+  k_berserk_swamp:['k_berserk_swamp','k_berserk_swamp2'], k_thrower_swamp:['k_thrower_swamp','k_thrower_swamp2'],
+  k_archer_swamp:['k_archer_swamp','k_archer_swamp2'], k_shield_swamp:['k_shield_swamp','k_shield_swamp2']
+};
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
@@ -363,6 +370,8 @@ function create(){
     this.anims.create({key:'orcwalk_'+this.biome,frames:[{key:'orc1_'+this.biome},{key:'orc2_'+this.biome}],frameRate:6,repeat:-1});
   this.orcWalk=(this.biome&&this.anims.exists('orcwalk_'+this.biome))?'orcwalk_'+this.biome:'orcwalk';
   this.orcAtk=(this.biome&&this.textures.exists('orc3_'+this.biome))?'orc3_'+this.biome:'orc3';
+  for(const tex in ENEMY_ANIMS){ if(!this.anims.exists('A_'+tex) && this.textures.exists(tex))
+    this.anims.create({key:'A_'+tex,frames:ENEMY_ANIMS[tex].map(k=>({key:k})),frameRate:4,repeat:-1}); }
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
   cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],TKEY); });
@@ -461,6 +470,7 @@ function spawnEnemy(scene,e){
   else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); }
   else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; }
   else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; }
+  if(scene.anims.exists('A_'+tex)) s.play('A_'+tex);   // покадровая анимация спецотряда (болото)
   // масштаб по уровню: чем выше уровень — тем крепче и быстрее враги (боссам HP растёт мягче, чтобы бой не затягивался)
   const i=currentLevel;
   const hpMul=s.isBoss?(1+i*0.05):(1+i*0.075);   // обычные ×до ~2.4, боссы ×до ~1.95 к 20-му уровню
