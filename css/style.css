@@ -1,9 +1,14 @@
 :root{--jungle-2:#1d3a25;--leaf-dk:#256b2c;--banana:#ffc93c;--banana-dk:#e0a200;
     --bark:#6b4226;--cream:#faf3e0;--menuBg:url('../assets/ui/menu.webp')}
   *{box-sizing:border-box}
-  body{margin:0;background:#0c160f;color:var(--cream);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;padding:16px}
-  #stage{position:relative;width:100%;max-width:820px;aspect-ratio:800/450;border:3px solid var(--bark);border-radius:14px;overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.5);background:#2a4a30}
+  body{margin:0;background:#0c160f;color:var(--cream);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;align-items:center;padding:0;min-height:100vh}
+  /* стейдж заполняет окно максимально, сохраняя 16:9 (полноэкранное отображение на ПК) */
+  #stage{position:relative;width:min(100vw, calc(100vh * 800 / 450));max-width:none;aspect-ratio:800/450;overflow:hidden;background:#2a4a30}
+  #stage:fullscreen{position:fixed;inset:0;margin:auto;max-width:none;width:min(100vw,calc(100vh*800/450));height:min(100vh,calc(100vw*450/800));aspect-ratio:auto}
   #game,#game canvas{width:100%;height:100%;display:block}
+  #fsBtn{position:absolute;top:8px;right:8px;z-index:30;width:34px;height:34px;border:none;border-radius:8px;background:rgba(20,42,26,.5);color:#fff;font-size:17px;line-height:1;cursor:pointer;opacity:.45;transition:opacity .15s}
+  #fsBtn:hover{opacity:1}
+  @media (pointer:coarse){ #fsBtn{display:none} }
   .overlay{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(120% 90% at 50% 0%,rgba(63,157,74,.18),transparent 60%),rgba(20,42,26,.94);backdrop-filter:blur(2px)}
   .overlay.show{display:flex}
   #cutscene{background:linear-gradient(180deg,rgba(8,16,10,.55),rgba(20,42,26,.9));cursor:pointer}
