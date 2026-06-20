@@ -14,7 +14,9 @@ Object.assign(TEX,{
   tile_sky:'assets/sprites/tile_sky.webp',
   b_spikes_sky:'assets/sprites/b_spikes_sky.webp', b_thorn_sky:'assets/sprites/b_thorn_sky.webp',
   b_stone_sky:'assets/sprites/b_stone_sky.webp', b_palisade_sky:'assets/sprites/b_palisade_sky.webp',
-  b_gate_sky:'assets/sprites/b_gate_sky.webp'
+  b_gate_sky:'assets/sprites/b_gate_sky.webp',
+  k_berserk_swamp:'assets/sprites/k_berserk_swamp.webp', k_thrower_swamp:'assets/sprites/k_thrower_swamp.webp',
+  k_archer_swamp:'assets/sprites/k_archer_swamp.webp', k_shield_swamp:'assets/sprites/k_shield_swamp.webp'
 });
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
@@ -239,7 +241,7 @@ const POOLS={
   jshrimp:[['shrimp',68],['orc',22],['thrower',10]],
   jmix:[['shrimp',18],['orc',28],['thrower',16],['archer',18],['shield',20]],
   jheavy:[['orc',38],['berserk',22],['archer',20],['shield',20]],
-  swamp:[['orc',22],['thrower',13],['archer',10],['troll_club',16],['troll_bone',13],['troll_boulder',9],['berserk',17]]
+  swamp:[['orc',20],['thrower',12],['archer',10],['shield',10],['troll_club',15],['troll_bone',12],['troll_boulder',9],['berserk',15]]
 };
 function pickType(poolName,R){ const pool=POOLS[poolName]||POOLS.swamp; let tot=0; for(const x of pool)tot+=x[1];
   let r=R()*tot; for(const x of pool){ r-=x[1]; if(r<0)return x[0]; } return pool[0][0]; }
@@ -345,7 +347,7 @@ function create(){
     hg.fillStyle(0xff4d6d); hg.fillCircle(8,9,7); hg.fillCircle(18,9,7); hg.fillTriangle(2,12,24,12,13,27);
     hg.fillStyle(0xffffff,0.7); hg.fillCircle(6,7,2.2); hg.generateTexture('life',26,28); hg.destroy(); }
   const bc=BIOMES[cfg.biome], bvz=vis(cfg.biome), dim=bc.tint;
-  this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName};
+  this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName}; this.biome=bc.ref||cfg.biome;  // визуальный биом (пещеры/ледник переиспользуют арт топей)
   this.bgFar=this.add.tileSprite(400,225,800,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
   this.bgMid=this.add.tileSprite(400,225,800,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
   this.bgFront=this.add.tileSprite(400,225,800,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
@@ -437,9 +439,11 @@ function create(){
 
 function spawnEnemy(scene,e){
   const k=e.type, now=scene.time.now;
-  const tex={shrimp:'s1',orc:'orc1',thrower:'k_thrower',archer:'k_archer',shield:'k_shield',berserk:'k_berserk',
+  const base={shrimp:'s1',orc:'orc1',thrower:'k_thrower',archer:'k_archer',shield:'k_shield',berserk:'k_berserk',
     troll_club:'t_club',troll_bone:'t_bone',troll_boulder:'t_boulder',
     boss:(scene.biomeCfg&&scene.biomeCfg.boss)||'spider'}[k]||'orc1';
+  // текстура по биому: если есть свой арт врага (например k_berserk_swamp) — берём его, иначе общий
+  let tex=base; if(scene.biome){ const v=base+'_'+scene.biome; if(scene.textures.exists(v))tex=v; }
   const s=scene.enemies.create(e.x,e.y,tex); s.setData('type',k); s.setData('min',e.min); s.setData('max',e.max);
   const W=s.width,H=s.height;
   if(k==='shrimp'){ s.hp=1; s.speed=55; s.body.setSize(W*0.72,H*0.62).setOffset(W*0.14,H*0.38); s.setVelocityX(-55); s.play('swim'); }
