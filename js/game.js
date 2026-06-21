@@ -31,7 +31,11 @@ Object.assign(TEX,{
   orc1_ice:'assets/sprites/orc1_ice.webp', orc2_ice:'assets/sprites/orc2_ice.webp', orc3_ice:'assets/sprites/orc3_ice.webp',
   orc1_sky:'assets/sprites/orc1_sky.webp', orc2_sky:'assets/sprites/orc2_sky.webp', orc3_sky:'assets/sprites/orc3_sky.webp',
   k_berserk2:'assets/sprites/k_berserk2.webp', k_thrower2:'assets/sprites/k_thrower2.webp',
-  k_archer2:'assets/sprites/k_archer2.webp', k_shield2:'assets/sprites/k_shield2.webp'
+  k_archer2:'assets/sprites/k_archer2.webp', k_shield2:'assets/sprites/k_shield2.webp',
+  k_berserk3:'assets/sprites/k_berserk3.webp', k_shield3:'assets/sprites/k_shield3.webp',
+  k_berserk_swamp3:'assets/sprites/k_berserk_swamp3.webp', k_shield_swamp3:'assets/sprites/k_shield_swamp3.webp',
+  k_berserk_ice3:'assets/sprites/k_berserk_ice3.webp', k_shield_ice3:'assets/sprites/k_shield_ice3.webp',
+  k_berserk_sky3:'assets/sprites/k_berserk_sky3.webp', k_shield_sky3:'assets/sprites/k_shield_sky3.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -503,15 +507,15 @@ function spawnEnemy(scene,e){
   const s=scene.enemies.create(e.x,e.y,tex); s.setData('type',k); s.setData('min',e.min); s.setData('max',e.max);
   const W=s.width,H=s.height;
   if(k==='shrimp'){ s.hp=1; s.speed=55; s.body.setSize(W*0.72,H*0.62).setOffset(W*0.14,H*0.38); s.setVelocityX(-55); s.play('swim'); }
-  else if(k==='orc'){ s.hp=12; s.speed=95; s.chase=165; s.body.setSize(W*0.42,H*0.82).setOffset(W*0.29,H*0.18); s.setVelocityX(-95); s.play(scene.orcWalk); }
-  else if(k==='berserk'){ s.hp=16; s.speed=110; s.chase=235; s.body.setSize(W*0.5,H*0.84).setOffset(W*0.25,H*0.16); }
-  else if(k==='shield'){ s.hp=18; s.speed=65; s.chase=95; s.body.setSize(W*0.5,H*0.82).setOffset(W*0.25,H*0.18); s.nextInv=now+2200; }
+  else if(k==='orc'){ s.hp=12; s.speed=95; s.chase=165; s.body.setSize(W*0.42,H*0.82).setOffset(W*0.29,H*0.18); s.setVelocityX(-95); s.play(scene.orcWalk); s.atkTex=scene.orcAtk; s.walkAnim=scene.orcWalk; }
+  else if(k==='berserk'){ s.hp=16; s.speed=110; s.chase=235; const bw=H*0.42; s.body.setSize(bw,H*0.84).setOffset((W-bw)/2,H*0.14); s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
+  else if(k==='shield'){ s.hp=18; s.speed=65; s.chase=95; const bw=H*0.44; s.body.setSize(bw,H*0.82).setOffset((W-bw)/2,H*0.16); s.nextInv=now+2200; s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
   else if(k==='thrower'){ s.hp=8; s.speed=95; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+800; }
   else if(k==='archer'){ s.hp=8; s.speed=70; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+1100; }
   else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); }
   else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; }
   else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; }
-  if(scene.anims.exists('A_'+tex)) s.play('A_'+tex);   // покадровая анимация спецотряда (болото)
+  if(scene.anims.exists('A_'+tex)){ s.play('A_'+tex); s.walkAnim='A_'+tex; }   // покадровая ходьба спецотряда
   // масштаб по уровню: чем выше уровень — тем крепче и быстрее враги (боссам HP растёт мягче, чтобы бой не затягивался)
   const i=currentLevel;
   const hpMul=s.isBoss?(1+i*0.05):(1+i*0.075);   // обычные ×до ~2.4, боссы ×до ~1.95 к 20-му уровню
@@ -578,7 +582,10 @@ function update(){
       if(overhead){ e.setVelocityX(0); e.setFlipX(dx<0); }                          // герой прямо сверху — стоим, даём стомпнуть
       else if(adx>=40 && adx<det && !above && Math.abs(dy)<150){ e.setVelocityX(dx<0?-csp:csp); e.setFlipX(dx<0); }
       else patrolMove(this,e,mn,mx);                                                // вплотную/далеко/высоко — ровное движение (без дёрганья)
-      if(t==='orc'&&(!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==this.orcWalk)))e.play(this.orcWalk); }   // орк всегда анимирован (без застывания на ударе)
+      // ближний бой: вплотную к герою — кадр удара (замах), иначе ходьба
+      if(e.atkTex && now<(e.atkUntil||0)){ e.anims.stop(); e.setTexture(e.atkTex); e.setFlipX(dx<0); }
+      else if(e.atkTex && adx<58 && Math.abs(dy)<72 && !above && now>(e.atkCd||0)){ e.atkUntil=now+300; e.atkCd=now+1000; e.anims.stop(); e.setTexture(e.atkTex); e.setFlipX(dx<0); }
+      else if(e.walkAnim && (!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==e.walkAnim))) e.play(e.walkAnim); }
   });
 
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
