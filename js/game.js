@@ -46,7 +46,10 @@ Object.assign(TEX,{
   b_spikes_ice:'assets/sprites/b_spikes_ice.webp', b_thorn_ice:'assets/sprites/b_thorn_ice.webp',
   b_stone_ice:'assets/sprites/b_stone_ice.webp', b_palisade_ice:'assets/sprites/b_palisade_ice.webp',
   b_gate_ice:'assets/sprites/b_gate_ice.webp',
-  plat_cave:'assets/sprites/plat_cave.webp', plat_ice:'assets/sprites/plat_ice.webp', plat_swamp:'assets/sprites/plat_swamp.webp'
+  plat_cave:'assets/sprites/plat_cave.webp', plat_ice:'assets/sprites/plat_ice.webp', plat_swamp:'assets/sprites/plat_swamp.webp',
+  cl_idle:'assets/sprites/cl_idle.webp', cl_run1:'assets/sprites/cl_run1.webp', cl_run2:'assets/sprites/cl_run2.webp', cl_jump:'assets/sprites/cl_jump.webp', cl_attack:'assets/sprites/cl_attack.webp',
+  gd_idle:'assets/sprites/gd_idle.webp', gd_run1:'assets/sprites/gd_run1.webp', gd_run2:'assets/sprites/gd_run2.webp', gd_jump:'assets/sprites/gd_jump.webp', gd_attack:'assets/sprites/gd_attack.webp',
+  dk_idle:'assets/sprites/dk_idle.webp', dk_run1:'assets/sprites/dk_run1.webp', dk_run2:'assets/sprites/dk_run2.webp', dk_jump:'assets/sprites/dk_jump.webp', dk_attack:'assets/sprites/dk_attack.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -61,15 +64,17 @@ const PW=109, PHH=62;
 const HEROES={
   mono:{name:'Обезьянка Бана', desc:'Прежний герой — компактный и быстрый.',
         idle:'p_idle', run:['p_run1','p_run2','p_run3'], jump:'p_jump', attack:'p_attack', files:null},
-  orang:{name:'Орангутан', desc:'Эффектная анимация: бег, прыжок, удар.',
-        idle:'h2_idle', run:['h2_run1','h2_run2','h2_run3'], jump:'h2_jump', attack:'h2_attack',
-        files:{h2_idle:'assets/sprites/h2_idle.webp', h2_run1:'assets/sprites/h2_run1.webp',
-               h2_run2:'assets/sprites/h2_run2.webp', h2_run3:'assets/sprites/h2_run3.webp',
-               h2_jump:'assets/sprites/h2_jump.webp', h2_attack:'assets/sprites/h2_attack.webp'}}
+  classic:{name:'Орангутан', desc:'Классический образ.', idle:'cl_idle', run:['cl_run1','cl_run2'], jump:'cl_jump', attack:'cl_attack', files:null},
+  gold:{name:'Золотой чемпион', desc:'Золотые доспехи.', idle:'gd_idle', run:['gd_run1','gd_run2'], jump:'gd_jump', attack:'gd_attack', files:null},
+  dark:{name:'Чёрный рыцарь', desc:'Вороненые латы.', idle:'dk_idle', run:['dk_run1','dk_run2'], jump:'dk_jump', attack:'dk_attack', files:null}
 };
-let selectedHero='mono';
-const HK=()=>HEROES[selectedHero];
-const HERO_DH={ orang:62 };   // целевая экранная высота героя в px (= габарит старой обезьяны, чтобы пролазил в те же щели); моно — нативный размер
+const SKINS=[ {id:'classic',name:'Классический',unlock:0}, {id:'gold',name:'Золотой',unlock:4}, {id:'dark',name:'Чёрный рыцарь',unlock:12} ];  // unlock = индекс уровня, по достижении которого образ открывается
+let selectedHero='classic';
+const HK=()=>HEROES[selectedHero]||HEROES.classic;
+const HERO_DH={ classic:62, gold:62, dark:62 };   // целевая экранная высота героя в px; моно — нативный размер
+let maxLevel=(()=>{ try{ return (+localStorage.getItem('banane_maxlvl'))||0; }catch(e){ return 0; } })();
+function bumpMaxLevel(){ if(typeof currentLevel==='number' && currentLevel>maxLevel){ maxLevel=currentLevel; try{localStorage.setItem('banane_maxlvl',String(maxLevel));}catch(e){} } }
+function skinUnlocked(id){ const s=SKINS.find(k=>k.id===id); return !s || maxLevel>=s.unlock; }
 const ADMIN=true;                 // dev-only level switching; set false for players
 const STOMP_DMG=6;   // прыжок сверху — ощутимый урон
 const HERO_MAXHP=100, START_LIVES=3;          // у героя полоска HP; жизни = число респаунов на чекпоинте
@@ -114,19 +119,14 @@ function renderStory(){const [spk,txt]=STORY[storyI];
 function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialogue');return;}renderStory();}
 /* ---- выбор персонажа ---- */
 function startCharSelect(){ show('charselect'); probeHero2(); }
-function probeHero2(){ const card=document.getElementById('chooseOrang'); if(!card)return;
-  const im=new Image();
-  im.onload=()=>{ card.classList.remove('locked'); card.dataset.ready='1';
-    const pic=document.getElementById('orangImg'); if(pic)pic.src=HEROES.orang.files.h2_idle;
-    const perk=document.getElementById('orangPerk'); if(perk)perk.textContent=HEROES.orang.desc; };
-  im.onerror=()=>{ card.classList.add('locked'); card.dataset.ready='';
-    const perk=document.getElementById('orangPerk'); if(perk)perk.textContent='Появится после добавления спрайта (assets/sprites/h2_*)'; };
-  im.src=HEROES.orang.files.h2_idle+'?_='+Date.now(); }
-function pickHero(h){ if(h==='orang' && !document.getElementById('chooseOrang').dataset.ready)return;
-  selectedHero=h; hide('charselect'); startStory(); }
+function probeHero2(){ const card=document.getElementById('chooseOrang'); if(!card)return;   // арт встроен — образ всегда доступен
+  card.classList.remove('locked'); card.dataset.ready='1';
+  const pic=document.getElementById('orangImg'); if(pic)pic.src='assets/sprites/cl_idle.webp';
+  const perk=document.getElementById('orangPerk'); if(perk)perk.textContent='Образы и доспехи открываются в инвентаре по ходу игры.'; }
+function pickHero(h){ selectedHero=h; hide('charselect'); startStory(); }
 document.getElementById('startBtn').onclick=()=>{hide('title');startCharSelect();};
 document.getElementById('chooseMono').onclick=()=>pickHero('mono');
-document.getElementById('chooseOrang').onclick=()=>pickHero('orang');
+document.getElementById('chooseOrang').onclick=()=>pickHero('classic');
 ['chooseMono','chooseOrang'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
   if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById(id).click();}}));
 document.getElementById('introNext').onclick=nextStory;
@@ -150,7 +150,25 @@ function buildInvGrid(){
     g.appendChild(card);
   });
 }
-function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); show('inventory'); }
+function buildSkinGrid(){
+  const g=document.getElementById('skinGrid'); if(!g)return; g.innerHTML='';
+  SKINS.forEach(sk=>{ const open=skinUnlocked(sk.id);
+    const card=document.createElement('div'); card.className='invCard'+(open?'':' locked')+(sk.id===selectedHero?' sel':'');
+    if(open){ const im=document.createElement('img'); im.src='assets/sprites/'+HEROES[sk.id].idle+'.webp'; card.appendChild(im);
+      card.onclick=()=>selectSkin(sk.id); }
+    else { const lk=document.createElement('div'); lk.className='lk'; lk.textContent='🔒'; card.appendChild(lk); }
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=open?sk.name:('Блок '+(Math.floor(sk.unlock/4)+1)); card.appendChild(nm);
+    g.appendChild(card);
+  });
+}
+function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id;
+  const sc=activeScene;
+  if(sc&&sc.player){ const key='run_'+id;
+    if(!sc.anims.exists(key)) sc.anims.create({key,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1});
+    const p=sc.player; p._st=null; p.anims.stop(); p.setTexture(HK().idle); fitHero(p); }
+  buildSkinGrid();
+}
+function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); show('inventory'); }
 function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); }
 document.getElementById('invClose').onclick=closeInventory;
 document.addEventListener('keydown',e=>{ if(e.code==='KeyI'){ if(pauseReason==='inv')closeInventory(); else openInventory(); } });
@@ -238,7 +256,8 @@ function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 function applyUpgradeState(){ const lv=upgraded?2:1, dm=upgraded?3:2;
   WEAPONS.boomerang.dmg=dm; WEAPONS.club.dmg=dm; WEAPONS.boomerang.level=lv; WEAPONS.club.level=lv; }
 function continueGame(){ const s=loadSave(); if(!s)return; hide('title');
-  selectedHero=s.hero||'mono'; chosenWeapon=s.weapon||'boomerang'; currentWeapon=chosenWeapon;
+  selectedHero=s.hero||'classic'; if(!HEROES[selectedHero])selectedHero='classic';   // старые сейвы 'orang' -> классический
+  chosenWeapon=s.weapon||'boomerang'; currentWeapon=chosenWeapon;
   score=s.score||0; currentLevel=Math.min(s.level||0,META.length-1); upgraded=!!s.upgraded;
   playedCine={}; playedBanter={}; applyUpgradeState(); startLevelFlow(); }
 
@@ -392,7 +411,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
 function create(){
   gameOver=false; paused=false; pauseReason=null; activeScene=this;
   this.bossBar=null; this.boss=null; this.flag=null;   // scene.restart переиспользует объект сцены — гасим ссылки прошлого уровня (иначе update зовёт методы на уничтоженных объектах)
-  lives=Math.max(lives,START_LIVES); heroHP=HERO_MAXHP;   // на входе в уровень — жизни и полный HP
+  lives=Math.max(lives,START_LIVES); heroHP=HERO_MAXHP; bumpMaxLevel();   // на входе в уровень — жизни/HP + учёт прогресса для разблокировки образов
   if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
   const cfg=genLevel(currentLevel), W=cfg.worldW;
   this.cuts=cfg.cuts; this.cpInGap=(x)=>cfg.gaps.some(g=>x>=g[0]-20&&x<=g[1]+20);
