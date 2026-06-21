@@ -223,7 +223,9 @@ function renderStory(){const [spk,txt]=STORY[storyI];
 function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialogue');return;}renderStory();}
 /* ---- выбор персонажа ---- */
 // герой один — орангутан; экран выбора убран
-document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); show('dialogue'); };   // выбор оружия -> вступительный ролик -> игра
+document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); playCinematic(INTRO_STORY,showTutorial); };   // ролик -> обучение -> игра (без выбора оружия)
+function showTutorial(){ show('tutorial'); }
+document.getElementById('tutStart').onclick=()=>{ hide('tutorial'); startGame('boomerang'); };   // стартовое оружие — банан-бумеранг, меняется клавишей 2 / в инвентаре
 function refreshSoundBtn(){ const b=document.getElementById('soundBtn'); if(b)b.textContent='Звук: '+(musMuted?'выкл':'вкл'); }
 (function(){ const sb=document.getElementById('soundBtn'); if(sb){ refreshSoundBtn(); sb.onclick=e=>{ e.stopPropagation(); musToggle(); refreshSoundBtn(); }; }
   const xb=document.getElementById('exitBtn'); if(xb) xb.onclick=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} hide('title'); show('byeScreen'); try{ window.close(); }catch(e){} };
@@ -347,7 +349,7 @@ function renderCine(){ const img=document.getElementById('cineImg'); const src=c
   img.src=src; if(img.complete && img.naturalWidth){ img.style.opacity='1'; kb(); }   // уже в кэше
   document.getElementById('cineText').textContent=cineTexts[cineI]||'';
   const last=cineI>=cineQ.length-1;
-  const nx=document.getElementById('cineNext'); nx.textContent=last?'Начать игру ▶':'Дальше →'; nx.classList.toggle('cineStart',last);
+  const nx=document.getElementById('cineNext'); nx.textContent=last?'К обучению ▶':'Дальше →'; nx.classList.toggle('cineStart',last);
   const pv=document.getElementById('cinePrev'); pv.disabled=(cineI===0);
   const dots=document.getElementById('cineDots'); if(dots)dots.textContent=(cineI+1)+' / '+cineQ.length; }
 function cineFinish(){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); }

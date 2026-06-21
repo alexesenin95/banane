@@ -75,6 +75,17 @@
   .btn.cineStart{background:#34c24f;color:#fff;box-shadow:0 5px 0 #1c7a2e}
   .btn.cineStart:hover{box-shadow:0 7px 0 #1c7a2e}
   .btn.cineStart:active{box-shadow:0 2px 0 #1c7a2e}
+  /* обучение */
+  #tutorial{justify-content:flex-start;overflow-y:auto;padding:18px 22px}
+  .tutTitle{font-size:clamp(22px,5vw,36px);margin:0 0 4px}
+  .tutGrid{display:flex;flex-direction:column;gap:6px;width:min(540px,94%);margin:10px 0 4px}
+  .tutRow{display:flex;align-items:center;gap:12px;text-align:left}
+  .tutKey{flex:0 0 116px;background:#163022;border:2px solid var(--leaf-dk);border-radius:8px;padding:6px 6px;text-align:center;font-weight:700;color:var(--banana);font-size:12.5px;font-family:"Russo One","Fredoka",sans-serif}
+  .tutRow span:last-child{font-size:13.5px;color:#f3ead0;line-height:1.2}
+  .tutTip{max-width:540px;margin:7px 0 0;font-size:13px;line-height:1.45;color:#e8f0e0;text-align:center}
+  .tutTip.tutWarn{background:rgba(255,201,60,.15);border:1px solid var(--banana-dk);border-radius:12px;padding:9px 14px;color:#ffe9a8}
+  .tutTip.tutMob{opacity:.78;font-size:12px}
+  #tutStart{margin-top:14px}
   #cinematic::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,transparent 38%,rgba(0,0,0,.45) 64%,rgba(0,0,0,.82))}
   #cineNext{position:absolute;bottom:14px;right:16px;z-index:2}
   @keyframes kenburns{from{transform:scale(1.13) translate(2%,-1%)}to{transform:scale(1) translate(-2%,1%)}}
