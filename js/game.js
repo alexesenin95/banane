@@ -124,6 +124,13 @@ let score=0, lives=3, heroHP=HERO_MAXHP, gameOver=false, paused=false, pauseReas
 const TOUCH={left:false,right:false,jump:false};   // состояние сенсорных кнопок (читается в update)
 const show=id=>document.getElementById(id).classList.add('show');
 const hide=id=>document.getElementById(id).classList.remove('show');
+// экран загрузки: 'game' (логотип, первый запуск) / 'level' (путь по биомам, между уровнями)
+const LOADBG={game:'assets/ui/gameload.webp', level:'assets/ui/levelload.webp'};
+let loadShownAt=0;
+function showLoad(kind){ const ls=document.getElementById('loadscreen'); if(!ls)return;
+  document.getElementById('loadImg').src=LOADBG[kind]||LOADBG.level; ls.classList.add('show'); loadShownAt=Date.now(); }
+function hideLoad(){ const ls=document.getElementById('loadscreen'); if(!ls)return;
+  setTimeout(()=>ls.classList.remove('show'), Math.max(0,650-(Date.now()-loadShownAt))); }
 
 const STORY=[
  ["Чичо","Эй, мохнатый, проснулся? Отлично! У нас тут небольшая катастрофа."],
@@ -397,9 +404,9 @@ function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
   const sc=game?(activeScene||game.scene.getScene('default')):null;
-  if(game&&sc&&sc.scene){ sc.scene.restart(); return; }
+  if(game&&sc&&sc.scene){ showLoad('level'); sc.scene.restart(); return; }
   if(game){ try{game.destroy(true);}catch(e){} game=null; }
-  game=new Phaser.Game(makeConfig()); }
+  showLoad('game'); game=new Phaser.Game(makeConfig()); }
 function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=START_LIVES; heroHP=HERO_MAXHP; currentLevel=0; playedCine={}; playedBanter={};
   upgraded=false; WEAPONS.boomerang.dmg=2; WEAPONS.club.dmg=2; WEAPONS.boomerang.level=1; WEAPONS.club.level=1; startLevelFlow(); }
 function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
@@ -553,6 +560,7 @@ function create(){
   const banner=this.add.text(400,150,cfg.boss?('Уровень '+(currentLevel+1)+'\n'+this.biomeCfg.bossName):('Уровень '+(currentLevel+1)),
     {fontFamily:'Trebuchet MS',fontSize:'34px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
+  hideLoad();   // уровень построен — убрать экран загрузки
 }
 
 // текстура врага по цепочке биомов: свой биом → ref-биом → базовая (если своего арта нет)
