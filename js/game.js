@@ -615,6 +615,7 @@ function update(){
   this.enemies.children.iterate(e=>{
     if(!e||!e.active)return;
     if(e.y>720){ if(e.isBoss)this.boss=null; e.disableBody(true,true); return; }
+    if(now<(e.fleeUntil||0)){ e.setFlipX(e.body.velocity.x<0); return; }   // отпрыгивает после стомпа — не перебиваем скорость ИИ
     const t=e.getData('type'),mn=e.getData('min'),mx=e.getData('max');
     const dx=p.x-e.x, dy=p.y-e.y, adx=Math.abs(dx);
     const DZ=16, above=dy<=-55;   // герой заметно выше — не догоняем по горизонтали (без дёрганья), а патрулируем
@@ -675,7 +676,10 @@ function damageEnemy(e,dmg){ const scene=e.scene; if(e.inv){ blockSpark(e); retu
     const boss=e.isBoss; e.disableBody(true,true);
     if(boss){ scene.boss=null; gameOver=true; scene.physics.pause();
       if(currentLevel<META.length-1) window.levelClear(currentLevel+1); else window.showWin(); } } }
-function hitEnemy(player,e){ if(player.body.touching.down&&e.body.touching.up){ if(!e.inv)damageEnemy(e,STOMP_DMG); else blockSpark(e); player.setVelocityY(-440); } else hurtPlayer(player.scene,e.x); }
+function hitEnemy(player,e){ if(player.body.touching.down&&e.body.touching.up){ if(!e.inv)damageEnemy(e,STOMP_DMG); else blockSpark(e); player.setVelocityY(-440);
+    if(e.active){ const now=e.scene.time.now, away=player.x<e.x?1:-1;   // выживший враг подпрыгивает (скидывает героя) и удирает в другую сторону
+      e.setVelocityY(-460); e.setVelocityX(away*Math.max(150,(e.speed||90)*1.4)); e.setFlipX(away<0); e.fleeUntil=now+600; }
+  } else hurtPlayer(player.scene,e.x); }
 function collectBanana(player,banana){ banana.disableBody(true,true); score+=10; updateHud(player.scene); checkUpgrade(player.scene); }
 function getLife(player,l){ l.disableBody(true,true); lives=Math.min(lives+1,9); updateHud(player.scene);
   const t=player.scene.add.text(l.x,l.y-10,'+1 ♥',{fontFamily:'Trebuchet MS',fontSize:'18px',color:'#ff7a93',stroke:'#3a0a14',strokeThickness:4}).setOrigin(0.5).setDepth(15);
