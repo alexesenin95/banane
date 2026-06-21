@@ -40,7 +40,12 @@ Object.assign(TEX,{
   tile_cave:'assets/sprites/tile_cave.webp',
   b_spikes_cave:'assets/sprites/b_spikes_cave.webp', b_thorn_cave:'assets/sprites/b_thorn_cave.webp',
   b_stone_cave:'assets/sprites/b_stone_cave.webp', b_palisade_cave:'assets/sprites/b_palisade_cave.webp',
-  b_gate_cave:'assets/sprites/b_gate_cave.webp'
+  b_gate_cave:'assets/sprites/b_gate_cave.webp',
+  ice_far:'assets/bg/ice_far.webp', ice_mid:'assets/bg/ice_mid.webp', ice_front:'assets/bg/ice_front.webp',
+  tile_ice:'assets/sprites/tile_ice.webp',
+  b_spikes_ice:'assets/sprites/b_spikes_ice.webp', b_thorn_ice:'assets/sprites/b_thorn_ice.webp',
+  b_stone_ice:'assets/sprites/b_stone_ice.webp', b_palisade_ice:'assets/sprites/b_palisade_ice.webp',
+  b_gate_ice:'assets/sprites/b_gate_ice.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -264,7 +269,9 @@ const BIOMES={
   cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',
     obst:{spikes:'b_spikes_cave',thorn:'b_thorn_cave',stone:'b_stone_cave',palisade:'b_palisade_cave',gate:'b_gate_cave'},
     ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
-  ice:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xc2d6e6,sky:0x14283a},
+  ice:{far:'ice_far',mid:'ice_mid',front:'ice_front',tile:'tile_ice',
+    obst:{spikes:'b_spikes_ice',thorn:'b_thorn_ice',stone:'b_stone_ice',palisade:'b_palisade_ice',gate:'b_gate_ice'},
+    ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
   sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile_sky',
     obst:{spikes:'b_spikes_sky',thorn:'b_thorn_sky',stone:'b_stone_sky',palisade:'b_palisade_sky',gate:'b_gate_sky'},
     boss:'boss_troll',bossName:'ВОЕНАЧАЛЬНИК',tint:0xffffff,sky:0xbcd6ff}
