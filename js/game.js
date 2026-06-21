@@ -12,6 +12,11 @@ Object.assign(TEX,{
   boss_troll:'assets/sprites/boss_troll.webp', boulder:'assets/sprites/boulder.webp',
   t_club2:'assets/sprites/t_club2.webp', t_club3:'assets/sprites/t_club3.webp', t_bone2:'assets/sprites/t_bone2.webp', t_bone3:'assets/sprites/t_bone3.webp',
   t_boulder2:'assets/sprites/t_boulder2.webp', t_boulder3:'assets/sprites/t_boulder3.webp', boss_troll2:'assets/sprites/boss_troll2.webp', boss_troll3:'assets/sprites/boss_troll3.webp',
+  boss_spider:'assets/sprites/boss_spider.webp', boss_spider2:'assets/sprites/boss_spider2.webp', boss_spider3:'assets/sprites/boss_spider3.webp',
+  boss_king:'assets/sprites/boss_king.webp', boss_king2:'assets/sprites/boss_king2.webp', boss_king3:'assets/sprites/boss_king3.webp',
+  boss_crystal:'assets/sprites/boss_crystal.webp', boss_crystal2:'assets/sprites/boss_crystal2.webp', boss_crystal3:'assets/sprites/boss_crystal3.webp',
+  boss_ice:'assets/sprites/boss_ice.webp', boss_ice2:'assets/sprites/boss_ice2.webp', boss_ice3:'assets/sprites/boss_ice3.webp',
+  boss_warlord:'assets/sprites/boss_warlord.webp', boss_warlord2:'assets/sprites/boss_warlord2.webp', boss_warlord3:'assets/sprites/boss_warlord3.webp',
   sky_far:'assets/bg/sky_far.webp', sky_mid:'assets/bg/sky_mid.webp', sky_front:'assets/bg/sky_front.webp',
   tile_sky:'assets/sprites/tile_sky.webp',
   b_spikes_sky:'assets/sprites/b_spikes_sky.webp', b_thorn_sky:'assets/sprites/b_thorn_sky.webp',
@@ -63,6 +68,7 @@ const ENEMY_ANIMS={};
 ['swamp','ice','sky'].forEach(b=>['berserk','thrower','archer','shield'].forEach(u=>{
   ENEMY_ANIMS['k_'+u+'_'+b]=['k_'+u+'_'+b, 'k_'+u+'_'+b+'2']; }));
 ['t_club','t_bone','t_boulder','boss_troll'].forEach(t=>{ ENEMY_ANIMS[t]=[t,t+'2']; });   // тролли — ходьба
+['boss_spider','boss_king','boss_crystal','boss_ice','boss_warlord'].forEach(b=>{ ENEMY_ANIMS[b]=[b,b+'2']; });   // боссы блоков — ходьба + кадр атаки (b+'3')
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
@@ -239,7 +245,7 @@ const BANTER={
   16:[['bird','Небесные руины! Наконец-то МОЯ стихия! Высота!'],['sloth','Высота… падать долго… успею вздремнуть на лету.'],['hero','Не проверяй. Держись троп.']],
   17:[['bird','Мосты висят на честном слове! И слово, кажется, «ой».'],['sloth','Я доверяю мостам. Они тоже еле держатся — мы похожи.'],['hero','Прыгаем по очереди. Аккуратно.']],
   18:[['bird','Почти у логова главного! Чувствуешь? Это запах победы!'],['sloth','Это запах меня. Я не мылся с самых джунглей.'],['hero','Победа ближе. Ещё рывок.']],
-  19:[['bird','ВОЕНАЧАЛЬНИК ОРКОВ! Босс всех боссов! ФИНАЛ!'],['sloth','Финал? Отлично. Потом можно наконец поспать.'],['hero','За Долину, за бананы, за вас двоих. ВПЕРЁД!']]
+  19:[['bird','ВЛАСТЕЛИН ТЕНИ! Тёмный владыка орков! Босс всех боссов! ФИНАЛ!'],['sloth','Финал? Отлично. Потом можно наконец поспать.'],['hero','За Долину, за бананы, за вас двоих. ВПЕРЁД!']]
 };
 let banLines=[], banI=0, banCb=null, playedBanter={};
 function playBanter(idx,cb){ const lines=BANTER[idx]; if(!lines||playedBanter[idx]){ if(cb)cb(); return; }
@@ -259,7 +265,7 @@ const BOSSCUT={
   swamp:[['Орк','ВОЖАК идёт! Топи дрогнут!'],['Герой','Пусть дрогнут. Я устою.']],
   cave:[['Орк','Из темноты выходит наш силач. Беги!'],['Герой','Я принёс свет. И кулаки.']],
   ice:[['Орк','Шаман заморозит твою кровь!'],['Герой','Согреюсь об его посох.']],
-  sky:[['Орк','Сам ВОЕНАЧАЛЬНИК встречает тебя. Это честь — и твой конец.'],['Герой','Честь приму. Конец оставь себе.']]
+  sky:[['Орк','Сам ВЛАСТЕЛИН ТЕНИ встречает тебя. Это честь — и твой конец.'],['Герой','Честь приму. Конец оставь себе.']]
 };
 
 /* ---- сохранение прогресса ---- */
@@ -296,19 +302,19 @@ function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^
 const BIOMES={
   jungle:{far:'bg_far',mid:'bg_mid',front:'bg_front',tile:'tile',
     obst:{spikes:'b_spikes',thorn:'b_thorn',stone:'b_stone',palisade:'b_palisade',gate:'b_gate'},
-    boss:'spider',bossName:'ПАУК-СТРАЖ',tint:0xa6abb5,sky:0x0a1410},
+    boss:'boss_spider',bossName:'ПАУК-СТРАЖ',tint:0xa6abb5,sky:0x0a1410},
   swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',plat:'plat_swamp',
     obst:{spikes:'b_spikes_swamp',thorn:'b_thorn_swamp',stone:'b_stone_swamp',palisade:'b_palisade_swamp',gate:'b_gate_swamp'},
-    boss:'boss_troll',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
+    boss:'boss_king',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
   cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',plat:'plat_cave',
     obst:{spikes:'b_spikes_cave',thorn:'b_thorn_cave',stone:'b_stone_cave',palisade:'b_palisade_cave',gate:'b_gate_cave'},
-    ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
+    ref:'swamp',boss:'boss_crystal',bossName:'КРИСТАЛЬНЫЙ ГОЛЕМ',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
   ice:{far:'ice_far',mid:'ice_mid',front:'ice_front',tile:'tile_ice',plat:'plat_ice',
     obst:{spikes:'b_spikes_ice',thorn:'b_thorn_ice',stone:'b_stone_ice',palisade:'b_palisade_ice',gate:'b_gate_ice'},
-    ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
+    ref:'swamp',boss:'boss_ice',bossName:'ЛЕДЯНОЙ ТИТАН',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
   sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile_sky',
     obst:{spikes:'b_spikes_sky',thorn:'b_thorn_sky',stone:'b_stone_sky',palisade:'b_palisade_sky',gate:'b_gate_sky'},
-    boss:'boss_troll',bossName:'ВОЕНАЧАЛЬНИК',tint:0xffffff,sky:0xbcd6ff}
+    boss:'boss_warlord',bossName:'ВЛАСТЕЛИН ТЕНИ',tint:0xffffff,sky:0xbcd6ff}
 };
 function vis(name){ const b=BIOMES[name]; return b.far?b:BIOMES[b.ref]; }   // источник текстур
 const POOLS={
