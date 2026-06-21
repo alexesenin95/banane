@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Банановый поход</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Russo+One&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js" crossorigin="anonymous"></script>
 </head>
@@ -16,23 +19,18 @@
     <p class="eyebrow">долина животных · вторжение</p>
     <h1>Банановый поход</h1>
     <p class="sub">Орки и креветки вторглись в Долину животных. Поднимайся, герой.</p>
-    <button class="btn" id="startBtn">В путь →</button>
-    <button class="btn" id="continueBtn" style="display:none;margin-top:10px;background:var(--leaf-dk);color:var(--cream);box-shadow:0 5px 0 #163f1a">Продолжить</button>
+    <div class="menuBtns">
+      <button class="btn" id="continueBtn" style="display:none">Продолжить</button>
+      <button class="btn" id="startBtn">Начать заново</button>
+      <button class="btn btn2" id="soundBtn">Звук: вкл</button>
+      <button class="btn btn2" id="exitBtn">Выход</button>
+    </div>
     <div class="hintbar">Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь</div>
   </div>
-  <div id="charselect" class="overlay">
-    <p class="eyebrow">выбор героя</p>
-    <p class="shaman">Кем играем?</p>
-    <p class="shaman-line">«Выбери героя — переиграть и поменять можно в любой момент.»</p>
-    <div class="choices">
-      <div class="choice" id="chooseMono" tabindex="0" role="button">
-        <img src="assets/sprites/p_idle.webp" alt="">
-        <div><div class="ttl">Обезьянка Бана</div><div class="perk">Прежний герой — компактный и быстрый.</div></div></div>
-      <div class="choice locked" id="chooseOrang" tabindex="0" role="button">
-        <img id="orangImg" src="assets/sprites/p_idle.webp" alt="">
-        <div><div class="ttl">Орангутан</div><div class="perk" id="orangPerk">Появится после добавления спрайта (assets/sprites/h2_*)</div></div></div>
-    </div>
-    <div class="hintbar">клик по карточке — выбрать</div>
+  <div id="byeScreen" class="overlay">
+    <h1>До новых встреч! 🍌</h1>
+    <p class="sub">Долина будет ждать своего героя.</p>
+    <button class="btn" id="byeBtn">Вернуться в меню</button>
   </div>
   <div id="intro" class="overlay">
     <p class="eyebrow">долина животных · вторжение</p>

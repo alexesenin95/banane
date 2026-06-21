@@ -1,7 +1,7 @@
 :root{--jungle-2:#1d3a25;--leaf-dk:#256b2c;--banana:#ffc93c;--banana-dk:#e0a200;
     --bark:#6b4226;--cream:#faf3e0;--menuBg:url('../assets/ui/menu.webp')}
   *{box-sizing:border-box}
-  body{margin:0;background:#0c160f;color:var(--cream);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;align-items:center;padding:0;min-height:100vh}
+  body{margin:0;background:#0c160f;color:var(--cream);font-family:"Fredoka","Segoe UI",system-ui,sans-serif;display:flex;justify-content:center;align-items:center;padding:0;min-height:100vh}
   /* стейдж заполняет окно максимально, сохраняя 16:9 (полноэкранное отображение на ПК) */
   #stage{position:relative;width:min(100vw, calc(100vh * 800 / 450));max-width:none;aspect-ratio:800/450;overflow:hidden;background:#2a4a30}
   #stage:fullscreen{position:fixed;inset:0;margin:auto;max-width:none;width:min(100vw,calc(100vh*800/450));height:min(100vh,calc(100vw*450/800));aspect-ratio:auto}
@@ -18,15 +18,21 @@
   #title{background:linear-gradient(180deg,rgba(8,16,10,.2),rgba(8,16,10,.1) 42%,rgba(8,16,10,.72)),var(--menuBg) center/cover no-repeat}
   #endScreen{background:linear-gradient(180deg,rgba(8,16,10,.55),rgba(8,16,10,.82)),var(--menuBg) center/cover no-repeat}
   .eyebrow{letter-spacing:.32em;text-transform:uppercase;font-size:12px;color:var(--banana);margin:0 0 10px;font-weight:700}
-  h1{margin:0;font-size:clamp(28px,7vw,50px);line-height:1;color:var(--cream);text-shadow:3px 3px 0 #1c3a12,0 2px 14px rgba(0,0,0,.6);font-weight:800}
+  h1{margin:0;font-family:"Russo One","Fredoka",sans-serif;font-size:clamp(30px,7.4vw,56px);line-height:1.04;letter-spacing:.01em;color:var(--banana);text-shadow:0 2px 0 #7a4a10,3px 4px 0 #1c3a12,0 4px 18px rgba(0,0,0,.6);font-weight:400;text-transform:uppercase}
   .sub{margin:14px 0 24px;color:#f3ead0;max-width:34ch;font-size:15px;line-height:1.5;text-shadow:0 1px 6px rgba(0,0,0,.7)}
   .shaman{font-size:clamp(20px,4.5vw,28px);margin:0 0 6px}
   .shaman-line{color:#cfe6cf;max-width:42ch;margin:0 0 22px;font-size:15px;line-height:1.55}
   #introPortrait,#cutPortrait{height:clamp(120px,26vh,180px);margin:0 auto 6px;display:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:pop .25s ease}
   @keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
-  .btn{appearance:none;border:none;cursor:pointer;background:var(--banana);color:#3a2a08;font-weight:800;font-size:17px;font-family:inherit;padding:14px 30px;border-radius:999px;box-shadow:0 5px 0 var(--banana-dk);transition:transform .08s,box-shadow .08s}
+  .btn{appearance:none;border:none;cursor:pointer;background:var(--banana);color:#3a2a08;font-weight:600;font-size:17px;font-family:"Russo One","Fredoka",sans-serif;letter-spacing:.02em;text-transform:uppercase;padding:14px 30px;border-radius:999px;box-shadow:0 5px 0 var(--banana-dk);transition:transform .08s,box-shadow .08s}
   .btn:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--banana-dk)}
   .btn:active{transform:translateY(3px);box-shadow:0 2px 0 var(--banana-dk)}
+  /* главное меню — колонка кнопок */
+  .menuBtns{display:flex;flex-direction:column;gap:11px;width:min(280px,72vw);margin-top:4px}
+  .menuBtns .btn{width:100%;font-size:16px;padding:13px 22px}
+  .btn.btn2{background:var(--leaf-dk);color:var(--cream);box-shadow:0 5px 0 #163f1a}
+  .btn.btn2:hover{box-shadow:0 7px 0 #163f1a}
+  .btn.btn2:active{box-shadow:0 2px 0 #163f1a}
   .choices{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:580px}
   .choice{flex:1 1 230px;min-width:210px;cursor:pointer;text-align:left;background:var(--jungle-2);border:2px solid var(--leaf-dk);border-radius:14px;padding:14px 16px;color:var(--cream);display:flex;gap:12px;align-items:center;transition:transform .08s,border-color .12s,background .12s}
   .choice:hover{transform:translateY(-3px);border-color:var(--banana);background:#234a2d}
