@@ -65,11 +65,11 @@
   #banter{cursor:pointer}
   #banEmoji{font-size:64px;line-height:1;margin:0 0 4px}
   #cinematic{padding:0;background:#000;overflow:hidden;cursor:pointer}
-  #cineImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform}
+  #cineImg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;will-change:transform,opacity;transition:opacity .3s ease}
   #cineText{position:absolute;left:0;right:0;bottom:64px;margin:0;padding:0 26px;z-index:2;color:#fff;font-size:clamp(15px,2.6vw,20px);line-height:1.45;text-shadow:0 2px 8px #000,0 0 22px #000;max-width:none}
   #cinematic .btn{position:absolute;right:22px;bottom:16px;z-index:3;padding:10px 22px;font-size:14px}
   #cineSkip{position:absolute;left:22px;bottom:22px;z-index:3;color:#cfe6cf}
-  #cinematic::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.72))}
+  #cinematic::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,transparent 38%,rgba(0,0,0,.45) 64%,rgba(0,0,0,.82))}
   #cineNext{position:absolute;bottom:14px;right:16px;z-index:2}
   @keyframes kenburns{from{transform:scale(1.13) translate(2%,-1%)}to{transform:scale(1) translate(-2%,1%)}}
 
