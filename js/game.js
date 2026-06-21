@@ -134,7 +134,7 @@ function hideLoad(){ const ls=document.getElementById('loadscreen'); if(!ls)retu
 
 /* ---- музыка (HTML5 Audio, луп + кроссфейд по биомам) ---- */
 // слот -> файл в assets/audio/. Меняй раскладку здесь, файлы переименовывать не нужно.
-const MUSIC={ menu:'moonstone', jungle:'moonstone', swamp:'murkwood', cave:'cloudgate3', ice:'vines', sky:'cloudgate5' };
+const MUSIC={ menu:'moonstone', jungle:'moonstone', swamp:'miregate2', cave:'cloudgate3', ice:'miregate4', sky:'cloudgate5' };
 const MUSIC_DIR='assets/audio/', MUS_VOL=0.5;
 let musMuted=(localStorage.getItem('mute')==='1'), musTracks={}, musCurSlug=null, musCurEl=null, musInteracted=false, musFadeIv=null;
 function musTrack(slug){ if(!musTracks[slug]){ const a=new Audio(MUSIC_DIR+slug+'.mp3'); a.loop=true; a.preload='auto'; a.volume=0; musTracks[slug]=a; } return musTracks[slug]; }
@@ -176,17 +176,12 @@ function renderStory(){const [spk,txt]=STORY[storyI];
   document.getElementById('introNext').textContent=(storyI>=STORY.length-1)?'К оружию →':'Дальше →';}
 function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialogue');return;}renderStory();}
 /* ---- выбор персонажа ---- */
-function startCharSelect(){ show('charselect'); probeHero2(); }
-function probeHero2(){ const card=document.getElementById('chooseOrang'); if(!card)return;   // арт встроен — образ всегда доступен
-  card.classList.remove('locked'); card.dataset.ready='1';
-  const pic=document.getElementById('orangImg'); if(pic)pic.src='assets/sprites/cl_idle.webp';
-  const perk=document.getElementById('orangPerk'); if(perk)perk.textContent='Образы и доспехи открываются в инвентаре по ходу игры.'; }
-function pickHero(h){ selectedHero=h; hide('charselect'); startStory(); }
-document.getElementById('startBtn').onclick=()=>{hide('title');startCharSelect();};
-document.getElementById('chooseMono').onclick=()=>pickHero('mono');
-document.getElementById('chooseOrang').onclick=()=>pickHero('classic');
-['chooseMono','chooseOrang'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById(id).click();}}));
+// герой один — орангутан; экран выбора убран
+document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); startStory(); };
+function refreshSoundBtn(){ const b=document.getElementById('soundBtn'); if(b)b.textContent='Звук: '+(musMuted?'выкл':'вкл'); }
+(function(){ const sb=document.getElementById('soundBtn'); if(sb){ refreshSoundBtn(); sb.onclick=e=>{ e.stopPropagation(); musToggle(); refreshSoundBtn(); }; }
+  const xb=document.getElementById('exitBtn'); if(xb) xb.onclick=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} hide('title'); show('byeScreen'); try{ window.close(); }catch(e){} };
+  const yb=document.getElementById('byeBtn'); if(yb) yb.onclick=()=>{ hide('byeScreen'); show('title'); }; })();
 document.getElementById('introNext').onclick=nextStory;
 document.getElementById('introSkip').onclick=()=>{hide('intro');show('dialogue');};
 function pick(w){chosenWeapon=w;currentWeapon=w;hide('dialogue');startGame(w);}
@@ -313,10 +308,7 @@ function continueGame(){ const s=loadSave(); if(!s)return; hide('title');
   score=s.score||0; currentLevel=Math.min(s.level||0,META.length-1); upgraded=!!s.upgraded;
   playedCine={}; playedBanter={}; applyUpgradeState(); startLevelFlow(); }
 
-function startLevelFlow(){ playBanter(currentLevel,()=>{
-  const def=CINEMATICS[currentLevel];
-  if(def&&!playedCine[currentLevel]){ playedCine[currentLevel]=true; playCinematic(def,startInstance); }
-  else startInstance(); }); }
+function startLevelFlow(){ startInstance(); }   // без закадра/кино перед уровнем — сразу в бой
 
 let endAction='restart';
 function endScreenG(title,s,btn,action){ document.getElementById('endTitle').textContent=title;
@@ -453,11 +445,11 @@ function updateWeaponHUD(scene){ if(!scene.whl)return;
   scene.wIcons.club.setAlpha(currentWeapon==='club'?1:0.45); }
 function checkUpgrade(scene){ if(!upgraded && score>=400){ upgraded=true; WEAPONS.boomerang.dmg=3; WEAPONS.club.dmg=3; WEAPONS.boomerang.level=2; WEAPONS.club.level=2;
     // иконки оружия не меняем (банан/меч), апгрейд только усиливает урон
-    const t=scene.add.text(400,92,'Оружие улучшено!',{fontFamily:'Trebuchet MS',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+    const t=scene.add.text(400,92,'Оружие улучшено!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
     scene.tweens.add({targets:t,alpha:0,y:72,delay:1000,duration:700,onComplete:()=>t.destroy()}); } }
 function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=500; updateHud(scene);
   const p=scene.player; p.armor=true; p.invuln=true; p.setTint(0xffe27a);
-  const t=scene.add.text(400,68,'БРОНЯ 5 сек!',{fontFamily:'Trebuchet MS',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+  const t=scene.add.text(400,68,'БРОНЯ 5 сек!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
   scene.tweens.add({targets:t,alpha:0,delay:1500,duration:600,onComplete:()=>t.destroy()});
   scene.time.delayedCall(5000,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } }); }
 
@@ -514,7 +506,7 @@ function create(){
   (cfg.cps||[]).forEach(cx=>{ const c=this.checkpoints.create(cx,366,'flag'); c.setTint(0x6a7a8a); c.activated=false; });
   this.physics.add.overlap(this.player,this.checkpoints,(pl,c)=>{ if(c.activated)return; c.activated=true; c.clearTint(); this.cpX=c.x;
     this.cameras.main.flash(120,120,200,150);
-    const t=this.add.text(c.x,300,'Чекпоинт!',{fontFamily:'Trebuchet MS',fontSize:'18px',color:'#9effa0',stroke:'#06320a',strokeThickness:4}).setOrigin(0.5).setDepth(16);
+    const t=this.add.text(c.x,300,'Чекпоинт!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'18px',color:'#9effa0',stroke:'#06320a',strokeThickness:4}).setOrigin(0.5).setDepth(16);
     this.tweens.add({targets:t,y:262,alpha:0,duration:1100,onComplete:()=>t.destroy()}); },null,this);
 
   this.boss=null; this.enemies=this.physics.add.group();
@@ -567,12 +559,12 @@ function create(){
   this.input.on('pointerdown',()=>doAttack(this));
   this.atkReady=0;
 
-  this.hud=this.add.text(16,12,'',{fontFamily:'Trebuchet MS, sans-serif',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4}).setScrollFactor(0).setDepth(20);
+  this.hud=this.add.text(16,12,'',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#fff',stroke:'#000',strokeThickness:4}).setScrollFactor(0).setDepth(20);
   this.add.rectangle(16,42,168,16,0x000000,0.55).setScrollFactor(0).setOrigin(0,0.5).setDepth(19).setStrokeStyle(1,0x000000);
   this.hpBar=this.add.rectangle(18,42,160,11,0x4caf50).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
-  this.add.text(186,42,'HP',{fontFamily:'Trebuchet MS',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
+  this.add.text(186,42,'HP',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
   updateHud(this);
-  this.add.text(16,424,(ADMIN?'[ ] — уровень (admin)   ':'')+'B — броня (500🍌)   I — инвентарь',{fontFamily:'Trebuchet MS',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
+  this.add.text(16,424,(ADMIN?'[ ] — уровень (admin)   ':'')+'B — броня (500🍌)   I — инвентарь',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
   this.add.rectangle(745,24,74,36,0x10241a,0.55).setScrollFactor(0).setDepth(18).setStrokeStyle(1,0x3f9d4a);
   this.whl=this.add.rectangle(728,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
   this.wIcons={boomerang:this.add.image(728,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
@@ -581,9 +573,9 @@ function create(){
 
   if(cfg.boss){ this.add.rectangle(400,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
     this.bossBar=this.add.rectangle(250,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
-    this.add.text(400,46,this.biomeCfg.bossName,{fontFamily:'Trebuchet MS',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
+    this.add.text(400,46,this.biomeCfg.bossName,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
   const banner=this.add.text(400,150,cfg.boss?('Уровень '+(currentLevel+1)+'\n'+this.biomeCfg.bossName):('Уровень '+(currentLevel+1)),
-    {fontFamily:'Trebuchet MS',fontSize:'34px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
+    {fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'32px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
   playMusic(cfg.biome);   // музыка биома (один трек на блок, кроссфейд на границе)
@@ -625,12 +617,18 @@ function patrolMove(scene,e,mn,mx){ const v=e.body.velocity.x; let dir=v<-1?-1:(
   if(scene.cpInGap&&scene.cpInGap(e.x+dir*34))dir=-dir;   // не уходить в пропасть
   e.setVelocityX(dir*e.speed); e.setFlipX(dir<0); }
 const projScale=()=>Math.min(1.6,1+currentLevel*0.035);   // снаряды быстрее на высоких уровнях (труднее увернуться)
-function fireAt(scene,e,tex,speed){ const dir=scene.player.x<e.x?-1:1;
-  const pr=scene.eprojs.create(e.x+dir*16,e.y-4,tex); pr.body.setAllowGravity(false);
-  pr.setVelocityX(dir*speed*projScale()); pr.setFlipX(dir<0); pr.setDepth(5); pr.born=scene.time.now; if(tex==='e_knife')pr.setAngularVelocity(dir*700); }
-function fireRock(scene,e){ const dir=scene.player.x<e.x?-1:1;
-  const r=scene.rocks.create(e.x+dir*30,e.y+8,'boulder'); r.setVelocityX(dir*235*projScale()); r.setAngularVelocity(dir*330);
-  r.setBounce(0.12); r.setDepth(5); r.born=scene.time.now; }
+function fireAt(scene,e,tex,speed){ const p=scene.player, dir=p.x<e.x?-1:1;
+  const sx=e.x+dir*16, sy=e.y-4, sp=speed*projScale();
+  const ang=Math.atan2((p.y-6)-sy, p.x-sx);   // целимся прямо в героя (а не строго по горизонтали)
+  const pr=scene.eprojs.create(sx,sy,tex); pr.body.setAllowGravity(false);
+  pr.setVelocity(Math.cos(ang)*sp, Math.sin(ang)*sp); pr.setDepth(5); pr.born=scene.time.now;
+  if(tex==='e_knife') pr.setAngularVelocity(dir*700); else pr.setRotation(ang); }   // стрела смотрит по направлению полёта
+function fireRock(scene,e){ const p=scene.player, dir=p.x<e.x?-1:1;
+  const sx=e.x+dir*26, sy=e.y-18, g=1250;   // бросок из рук, по баллистической дуге в героя
+  const dxr=p.x-sx, T=Phaser.Math.Clamp(Math.abs(dxr)/360,0.5,0.95);
+  const r=scene.rocks.create(sx,sy,'boulder');
+  r.setVelocity(dxr/T, ((p.y-10)-sy)/T - 0.5*g*T); r.setAngularVelocity(dir*330);
+  r.setBounce(0.15); r.setDepth(5); r.born=scene.time.now; }
 
 function update(){
   if(gameOver||paused)return;
@@ -708,7 +706,7 @@ function doAttack(scene){
     scene.solids.children.iterate(s=>{ if(!s||!s.active||!s.breakable)return; const ddx=(s.x-p.x)*dir; if(ddx>-10&&ddx<range&&Math.abs(s.y-p.y)<70){ s.hp-=dmg+1; if(s.hp<=0)s.destroy(); else {s.setTint(0xffaaaa);scene.time.delayedCall(80,()=>{if(s.active)s.clearTint();});} } }); }
 }
 function projHit(pr,e){ if(e.inv){ blockSpark(e); pr.destroy(); return; } damageEnemy(e,WEAPONS[currentWeapon].dmg); pr.destroy(); }
-function blockSpark(e){ const s=e.scene.add.text(e.x,e.y-30,'✦',{fontFamily:'Trebuchet MS',fontSize:'20px',color:'#bfe3ff'}).setOrigin(0.5).setDepth(7);
+function blockSpark(e){ const s=e.scene.add.text(e.x,e.y-30,'✦',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#bfe3ff'}).setOrigin(0.5).setDepth(7);
   e.scene.tweens.add({targets:s,alpha:0,y:e.y-52,duration:300,onComplete:()=>s.destroy()}); }
 function damageEnemy(e,dmg){ const scene=e.scene; if(e.inv){ blockSpark(e); return; }
   e.hp-=dmg; e.setTint(0xff6666); scene.time.delayedCall(110,()=>{ if(e.active&&!e.inv)e.clearTint(); });
@@ -722,7 +720,7 @@ function hitEnemy(player,e){ if(player.body.touching.down&&e.body.touching.up){ 
   } else hurtPlayer(player.scene,e.x); }
 function collectBanana(player,banana){ banana.disableBody(true,true); score+=10; updateHud(player.scene); checkUpgrade(player.scene); }
 function getLife(player,l){ l.disableBody(true,true); lives=Math.min(lives+1,9); updateHud(player.scene);
-  const t=player.scene.add.text(l.x,l.y-10,'+1 ♥',{fontFamily:'Trebuchet MS',fontSize:'18px',color:'#ff7a93',stroke:'#3a0a14',strokeThickness:4}).setOrigin(0.5).setDepth(15);
+  const t=player.scene.add.text(l.x,l.y-10,'+1 ♥',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'18px',color:'#ff7a93',stroke:'#3a0a14',strokeThickness:4}).setOrigin(0.5).setDepth(15);
   player.scene.tweens.add({targets:t,y:l.y-46,alpha:0,duration:800,onComplete:()=>t.destroy()}); }
 function reachFlag(){ if(gameOver)return; gameOver=true; this.physics.pause(); this.player.setVelocity(0,0);
   if(currentLevel<META.length-1) window.levelClear(currentLevel+1); else window.showWin(); }
@@ -733,7 +731,7 @@ function hurtPlayer(scene,fromX,dmg){ const p=scene.player; if(gameOver||p.invul
   p.invuln=true; p.setAlpha(0.55); scene.time.delayedCall(700,()=>{ if(p.active&&!p.armor){p.invuln=false;p.setAlpha(1);} }); }
 function loseLife(scene){ lives-=1; heroHP=HERO_MAXHP;
   if(lives<=0){ gameOver=true; scene.physics.pause(); scene.cameras.main.flash(400,160,0,0);
-    scene.add.text(400,200,'Уровень заново',{fontFamily:'Trebuchet MS',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
+    scene.add.text(400,200,'Уровень заново',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
     scene.time.delayedCall(1200,()=>{ lives=START_LIVES; heroHP=HERO_MAXHP; gameOver=false; scene.scene.restart(); }); return; }
   const p=scene.player; p.setVelocity(0,0); p.setPosition(scene.cpX,180); p.clearTint();   // респаун на чекпоинте, полный HP
   scene.cameras.main.flash(160,255,80,80); updateHud(scene);
