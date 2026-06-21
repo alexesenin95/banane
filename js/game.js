@@ -223,7 +223,7 @@ function renderStory(){const [spk,txt]=STORY[storyI];
 function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialogue');return;}renderStory();}
 /* ---- выбор персонажа ---- */
 // герой один — орангутан; экран выбора убран
-document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); startStory(); };
+document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); playCinematic(INTRO_STORY,()=>show('dialogue')); };
 function refreshSoundBtn(){ const b=document.getElementById('soundBtn'); if(b)b.textContent='Звук: '+(musMuted?'выкл':'вкл'); }
 (function(){ const sb=document.getElementById('soundBtn'); if(sb){ refreshSoundBtn(); sb.onclick=e=>{ e.stopPropagation(); musToggle(); refreshSoundBtn(); }; }
   const xb=document.getElementById('exitBtn'); if(xb) xb.onclick=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} hide('title'); show('byeScreen'); try{ window.close(); }catch(e){} };
@@ -323,6 +323,20 @@ const CINEMATICS={ 4:{ panels:['assets/cutscenes/c4_1.webp','assets/cutscenes/c4
          'Но герой ещё стоит на краю болот. За Долину — вперёд!'] } };
 // прогреваем кэш браузера для кино-панелей заранее (чтобы переход на уровень не висел на их загрузке)
 Object.values(CINEMATICS).forEach(d=>d.panels.forEach(src=>{ const im=new Image(); im.src=src; }));
+// вступительный ролик (история героя) — играет один раз в начале новой игры, перед первым уровнем
+const INTRO_STORY={
+  panels:['assets/cutscenes/c_intro1.webp','assets/cutscenes/c_intro2.webp','assets/cutscenes/c_intro3.webp',
+          'assets/cutscenes/c_intro4.webp','assets/cutscenes/c_intro5.webp','assets/cutscenes/c_intro6.webp','assets/cutscenes/c_intro7.webp'],
+  texts:[
+    'Когда-то в сердце джунглей пела древняя деревня орангутанов и лесных зверей: мосты из лиан, домики на ветвях, бесконечный праздник. Но вдали уже сгущались чужие тени.',
+    'Орки пришли с огнём. Грубая броня и факелы — и мосты вспыхнули, сторожевые башни рухнули в дым.',
+    'Звери бежали сквозь горящий лес. Деревня пала, а джунгли заволокло гарью и горем.',
+    'У горной реки два лесных хранителя нашли крошечного орангутана, завёрнутого в листья. Тихий рассвет обещал надежду.',
+    'Годы шли. На каменной площадке горного поселения юный Банан учился силе, ловкости и стойкости — под взглядом своих наставников.',
+    'И однажды он встал на утёсе — взрослый, с оружием в руках. За спиной приютившие его горы, впереди в дымке — родные джунгли.',
+    'Банан вернулся к границе старого леса. Внутри — башни орков, красные флаги, дым. Пора возвращать дом. За Долину — вперёд!'
+  ]};
+INTRO_STORY.panels.forEach(src=>{ const im=new Image(); im.src=src; });
 let playedCine={}, cineQ=[], cineTexts=[], cineI=0, cineCb=null;
 function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
 function renderCine(){ const img=document.getElementById('cineImg'); img.src=cineQ[cineI];
@@ -331,6 +345,7 @@ function renderCine(){ const img=document.getElementById('cineImg'); img.src=cin
   document.getElementById('cineNext').textContent=(cineI>=cineQ.length-1)?'В бой →':'Дальше →'; }
 function advanceCine(){ cineI++; if(cineI>=cineQ.length){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); return; } renderCine(); }
 document.getElementById('cinematic').onclick=advanceCine;
+document.getElementById('cineSkip').onclick=(e)=>{ e.stopPropagation(); hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); };   // пропустить ролик целиком
 /* ---- предуровневый трёп: птица + ленивец + обезьяна (по уровню) ---- */
 const SPK={ bird:{emoji:'🦜',name:'Кеша',color:'#7fd1ff'},
             sloth:{emoji:'🦥',name:'Тормозок',color:'#d9c08a'},
