@@ -10,6 +10,8 @@ Object.assign(TEX,{
   b_gate_swamp:'assets/sprites/b_gate_swamp.webp',
   t_club:'assets/sprites/t_club.webp', t_bone:'assets/sprites/t_bone.webp', t_boulder:'assets/sprites/t_boulder.webp',
   boss_troll:'assets/sprites/boss_troll.webp', boulder:'assets/sprites/boulder.webp',
+  t_club2:'assets/sprites/t_club2.webp', t_club3:'assets/sprites/t_club3.webp', t_bone2:'assets/sprites/t_bone2.webp', t_bone3:'assets/sprites/t_bone3.webp',
+  t_boulder2:'assets/sprites/t_boulder2.webp', t_boulder3:'assets/sprites/t_boulder3.webp', boss_troll2:'assets/sprites/boss_troll2.webp', boss_troll3:'assets/sprites/boss_troll3.webp',
   sky_far:'assets/bg/sky_far.webp', sky_mid:'assets/bg/sky_mid.webp', sky_front:'assets/bg/sky_front.webp',
   tile_sky:'assets/sprites/tile_sky.webp',
   b_spikes_sky:'assets/sprites/b_spikes_sky.webp', b_thorn_sky:'assets/sprites/b_thorn_sky.webp',
@@ -60,6 +62,7 @@ const ENEMY_ANIMS={};
 ['berserk','thrower','archer','shield'].forEach(u=>{ ENEMY_ANIMS['k_'+u]=['k_'+u,'k_'+u+'2']; });   // джунгли (без суффикса)
 ['swamp','ice','sky'].forEach(b=>['berserk','thrower','archer','shield'].forEach(u=>{
   ENEMY_ANIMS['k_'+u+'_'+b]=['k_'+u+'_'+b, 'k_'+u+'_'+b+'2']; }));
+['t_club','t_bone','t_boulder','boss_troll'].forEach(t=>{ ENEMY_ANIMS[t]=[t,t+'2']; });   // тролли — ходьба
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
 const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
@@ -563,9 +566,9 @@ function spawnEnemy(scene,e){
   else if(k==='shield'){ s.hp=18; s.speed=65; s.chase=95; const bw=H*0.44; s.body.setSize(bw,H*0.82).setOffset((W-bw)/2,H*0.16); s.nextInv=now+2200; s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
   else if(k==='thrower'){ s.hp=8; s.speed=95; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+800; }
   else if(k==='archer'){ s.hp=8; s.speed=70; s.body.setSize(W*0.42,H*0.8).setOffset(W*0.29,H*0.2); s.fireReady=now+1100; }
-  else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); }
-  else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; }
-  else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; }
+  else if(k==='troll_club'||k==='troll_bone'){ s.hp=22; s.speed=66; s.chase=140; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.setVelocityX(-66); s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
+  else if(k==='troll_boulder'){ s.hp=18; s.speed=42; s.body.setSize(W*0.5,H*0.78).setOffset(W*0.25,H*0.2); s.fireReady=now+1600; s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
+  else { s.hp=36; s.speed=95; s.body.setSize(W*0.55,H*0.7).setOffset(W*0.22,H*0.22); s.isBoss=true; scene.boss=s; s.atkTex=scene.textures.exists(tex+'3')?tex+'3':null; }
   if(scene.anims.exists('A_'+tex)){ s.play('A_'+tex); s.walkAnim='A_'+tex; }   // покадровая ходьба спецотряда
   // масштаб по уровню: чем выше уровень — тем крепче и быстрее враги (боссам HP растёт мягче, чтобы бой не затягивался)
   const i=currentLevel;
@@ -617,7 +620,10 @@ function update(){
     const DZ=16, above=dy<=-55;   // герой заметно выше — не догоняем по горизонтали (без дёрганья), а патрулируем
     if(t==='shrimp'){ patrolMove(this,e,mn,mx); }
     else if(t==='boss'){ e.setFlipX(dx<0);
-      if(adx>DZ && dy>-90) e.setVelocityX(dx<0?-e.speed:e.speed); else patrolMove(this,e,mn,mx); }
+      if(adx>DZ && dy>-90) e.setVelocityX(dx<0?-e.speed:e.speed); else patrolMove(this,e,mn,mx);
+      if(e.atkTex && now<(e.atkUntil||0)){ e.anims.stop(); e.setTexture(e.atkTex); e.setFlipX(dx<0); }
+      else if(e.atkTex && adx<82 && Math.abs(dy)<95 && now>(e.atkCd||0)){ e.atkUntil=now+340; e.atkCd=now+1200; e.anims.stop(); e.setTexture(e.atkTex); e.setFlipX(dx<0); }
+      else if(e.walkAnim && (!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==e.walkAnim))) e.play(e.walkAnim); }
     else if(t==='thrower'||t==='archer'){ const rng=t==='archer'?560:380; e.setFlipX(dx<0);
       if(adx<rng && !above && Math.abs(dy)<150){
         if(adx>=120){ e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+(t==='archer'?1500:1100); fireAt(this,e,t==='archer'?'e_arrow':'e_knife',t==='archer'?370:270);} }
@@ -625,9 +631,11 @@ function update(){
       else patrolMove(this,e,mn,mx); }
     else if(t==='troll_boulder'){ e.setFlipX(dx<0); const rng=540;
       if(adx<rng && !above && Math.abs(dy)<175){
-        if(adx>=175){ e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+2400; fireRock(this,e); } }
+        if(adx>=175){ e.setVelocityX(0); if(now>e.fireReady){ e.fireReady=now+2400; e.atkUntil=now+380; fireRock(this,e); } }
         else if(adx>DZ){ e.setVelocityX(dx<0?e.speed:-e.speed); } else e.setVelocityX(0); }
-      else patrolMove(this,e,mn,mx); }
+      else patrolMove(this,e,mn,mx);
+      if(e.atkTex && now<(e.atkUntil||0)){ e.anims.stop(); e.setTexture(e.atkTex); e.setFlipX(dx<0); }   // кадр броска валуна
+      else if(e.walkAnim && (!e.anims.isPlaying||(e.anims.currentAnim&&e.anims.currentAnim.key!==e.walkAnim))) e.play(e.walkAnim); }
     else { if(t==='shield'){ if(now>e.nextInv){ e.inv=true; e.invEnd=now+1500; e.nextInv=now+3800; e.setTint(0x9fd8ff); } if(e.inv&&now>e.invEnd){ e.inv=false; e.clearTint(); } }
       const det=440, csp=e.chase||150, overhead=adx<34 && dy<-12 && dy>-175;
       if(overhead){ e.setVelocityX(0); e.setFlipX(dx<0); }                          // герой прямо сверху — стоим, даём стомпнуть
