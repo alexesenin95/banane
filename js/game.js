@@ -35,7 +35,12 @@ Object.assign(TEX,{
   k_berserk3:'assets/sprites/k_berserk3.webp', k_shield3:'assets/sprites/k_shield3.webp',
   k_berserk_swamp3:'assets/sprites/k_berserk_swamp3.webp', k_shield_swamp3:'assets/sprites/k_shield_swamp3.webp',
   k_berserk_ice3:'assets/sprites/k_berserk_ice3.webp', k_shield_ice3:'assets/sprites/k_shield_ice3.webp',
-  k_berserk_sky3:'assets/sprites/k_berserk_sky3.webp', k_shield_sky3:'assets/sprites/k_shield_sky3.webp'
+  k_berserk_sky3:'assets/sprites/k_berserk_sky3.webp', k_shield_sky3:'assets/sprites/k_shield_sky3.webp',
+  cave_far:'assets/bg/cave_far.webp', cave_mid:'assets/bg/cave_mid.webp', cave_front:'assets/bg/cave_front.webp',
+  tile_cave:'assets/sprites/tile_cave.webp',
+  b_spikes_cave:'assets/sprites/b_spikes_cave.webp', b_thorn_cave:'assets/sprites/b_thorn_cave.webp',
+  b_stone_cave:'assets/sprites/b_stone_cave.webp', b_palisade_cave:'assets/sprites/b_palisade_cave.webp',
+  b_gate_cave:'assets/sprites/b_gate_cave.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -256,7 +261,9 @@ const BIOMES={
   swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',
     obst:{spikes:'b_spikes_swamp',thorn:'b_thorn_swamp',stone:'b_stone_swamp',palisade:'b_palisade_swamp',gate:'b_gate_swamp'},
     boss:'boss_troll',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
-  cave:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0x8a90a8,sky:0x0a0a16},
+  cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',
+    obst:{spikes:'b_spikes_cave',thorn:'b_thorn_cave',stone:'b_stone_cave',palisade:'b_palisade_cave',gate:'b_gate_cave'},
+    ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
   ice:{ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xc2d6e6,sky:0x14283a},
   sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile_sky',
     obst:{spikes:'b_spikes_sky',thorn:'b_thorn_sky',stone:'b_stone_sky',palisade:'b_palisade_sky',gate:'b_gate_sky'},
