@@ -318,13 +318,15 @@ function advanceCut(){ cutI++; if(cutI>=cutLines.length){ hide('cutscene'); paus
 document.getElementById('cutscene').onclick=advanceCut;
 
 /* ---- кино-панели (драматичное интро этапа) ---- */
-const CINEMATICS={ 4:{ panels:['assets/cutscenes/c4_1.webp','assets/cutscenes/c4_2.webp','assets/cutscenes/c4_3.webp','assets/cutscenes/c4_4.webp'],
-  texts:['Долина животных цвела под банановым солнцем…',
-         '…пока не пришли орки. Огонь и дым поглотили деревню зверей.',
-         'Выжженная земля захлебнулась гнилью — джунгли стали ядовитой топью.',
-         'Но герой ещё стоит на краю болот. За Долину — вперёд!'] } };
+const CINEMATICS={ 4:{ endLabel:'В бой ▶',
+  panels:['assets/cutscenes/c_swamp1.webp','assets/cutscenes/c_swamp2.webp','assets/cutscenes/c_swamp3.webp','assets/cutscenes/c_swamp4.webp','assets/cutscenes/c_swamp5.webp'],
+  texts:['Там, где когда-то цвели джунгли его детства, теперь чернела топь. Орки осушили живой лес до гнили и тлена. Банан ступил на шаткий мост — и сердце сжалось: от родного дома остались лишь мёртвые деревья да чужие флаги вдали.',
+         'За пеленой тумана он увидел то, от чего застыла кровь: клетки. Звери Долины — соседи, друзья его детства — томились в неволе, согнанные орками на работы. Их глаза давно разучились надеяться.',
+         'Ярость вспыхнула в груди. Банан ворвался в лагерь, и плечом к плечу встал верный Мастер Бо. Орки не ждали бури — а буря не щадила. Замки трещали, клетки распахивались: с каждым ударом возвращалась свобода.',
+         'Освобождённые звери обступили героя, дрожа и плача от счастья. «Спасибо… но мы не последние», — шептали они, указывая во тьму топей. «Там, дальше, ещё сотни наших. Все ждут. Все верят, что кто-то придёт».',
+         'Банан поднялся на утёс и окинул взглядом бескрайнюю топь, тонущую в рассвете. Где-то там, в дыму и тумане, томились его братья и сёстры. Он сжал оружие. «Я приду за каждым. Слышите? За каждым».'] } };
 // вступительный ролик (история героя) — играет один раз в начале новой игры, перед первым уровнем
-const INTRO_STORY={
+const INTRO_STORY={ endLabel:'К обучению ▶',
   panels:['assets/cutscenes/c_intro1.webp','assets/cutscenes/c_intro2.webp','assets/cutscenes/c_intro3.webp',
           'assets/cutscenes/c_intro4.webp','assets/cutscenes/c_intro5.webp','assets/cutscenes/c_intro6.webp','assets/cutscenes/c_intro7.webp'],
   texts:[
@@ -342,7 +344,8 @@ const _preloadKeep=[];
     ['assets/portraits/sloth.webp','assets/portraits/panda.webp','assets/sprites/cl_idle.webp'])   // портреты болтовни
   .forEach(src=>{ const im=new Image(); im.decoding='sync'; im.src=src; _preloadKeep.push(im); });
 let playedCine={}, cineQ=[], cineTexts=[], cineI=0, cineCb=null;
-function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
+let cineEndLabel='Начать ▶';
+function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineEndLabel=def.endLabel||'Начать ▶'; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
 function renderCine(){ const img=document.getElementById('cineImg'); const src=cineQ[cineI];
   const kb=()=>{ img.style.animation='none'; void img.offsetWidth; img.style.animation='kenburns 7s ease-out forwards'; };
   img.style.opacity='0'; img.onload=()=>{ img.style.opacity='1'; kb(); };   // не крутим пустой кадр — ждём картинку
@@ -350,7 +353,7 @@ function renderCine(){ const img=document.getElementById('cineImg'); const src=c
   img.src=src; if(img.complete && img.naturalWidth){ img.style.opacity='1'; kb(); }   // уже в кэше
   document.getElementById('cineText').textContent=cineTexts[cineI]||'';
   const last=cineI>=cineQ.length-1;
-  const nx=document.getElementById('cineNext'); nx.textContent=last?'К обучению ▶':'Дальше →'; nx.classList.toggle('cineStart',last);
+  const nx=document.getElementById('cineNext'); nx.textContent=last?cineEndLabel:'Дальше →'; nx.classList.toggle('cineStart',last);
   const pv=document.getElementById('cinePrev'); pv.disabled=(cineI===0);
   const dots=document.getElementById('cineDots'); if(dots)dots.textContent=(cineI+1)+' / '+cineQ.length; }
 function cineFinish(){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); }
@@ -367,12 +370,12 @@ const SPK={ sloth:{name:'Дрём', img:'assets/portraits/sloth.webp', color:'#c
 const BANTER={
   0:[['panda','Помнишь, малыш, как я учил тебя падать и снова вставать? Сегодня ты встаёшь за всю Долину.'],['sloth','А я учил тебя спать. Тоже навык. Но, видимо, не сегодня…'],['hero','Спасибо, что верили в меня. Я не подведу.']],
   1:[['sloth','Орки сожгли твою колыбель, Банан. И мой любимый гамак заодно. Гамак-то за что?'],['panda','Гнев — плохой попутчик. Дерись сердцем, а не злостью.'],['hero','Сердцем — так сердцем. Но и кулаком немножко.']],
-  2:[['panda','Впереди Паук-Страж. Восемь ног — восемь шансов оступиться. Жди момент и бей.'],['sloth','Восемь ног, а спит наверняка меньше меня. Слабак.'],['hero','Стой за мной. Я порву эту паутину.']],
-  3:[['sloth','Болото… Тут даже я двигаюсь быстрее, чем хотелось бы.'],['panda','Топь учит терпению: поспешишь — утонешь. Шаг за шагом, ученик.'],['hero','Терпение и шаг. Понял, Мастер.']],
+  2:[['panda','Орки рубят наш лес на топливо для своих кузниц. Каждое дерево помнило чей-то дом.'],['sloth','И мой обед под ним. Вот это уже личное.'],['hero','Отомстим за каждое. Идём дальше.']],
+  3:[['panda','Впереди Паук-Страж — последняя тень над джунглями. Восемь ног, восемь шансов оступиться. Жди момент и бей.'],['sloth','Спит наверняка меньше меня. Уже проигрывает.'],['hero','Стой за мной. Я порву эту паутину.']],
   4:[['panda','В детстве ты боялся тёмной воды. Помнишь? А теперь идёшь прямо сквозь неё.'],['sloth','Я до сих пор боюсь. Поэтому держусь сзади. Стратегически.'],['hero','Прикрою. Идите след в след.']],
   5:[['sloth','Тролли впереди. Большие, как моё нежелание шевелиться.'],['panda','Сила без разума — гора, что рушится сама. Будь водой, обойди удар.'],['hero','Буду водой. С банановым вкусом.']],
-  6:[['panda','Вожак троллей силён, но медлителен. Твоя ловкость — вот твой настоящий меч.'],['sloth','Если что — я громко поверю в тебя отсюда. Очень громко.'],['hero','И этого хватит. За Долину!']],
-  7:[['sloth','Пещеры… темно и тихо. Идеально для сна. И для засад.'],['panda','В темноте глаза лгут — доверься слуху и сердцу.'],['hero','Слушаю темноту. Идём.']],
+  6:[['panda','Топь забирает силы у того, кто спешит. Дыши ровно, ступай твёрдо.'],['sloth','Я и так не спешу. Считай, прирождённый мастер болот.'],['hero','Тогда веди, мастер. Шаг за шагом.']],
+  7:[['panda','Вожак троллей силён, но медлителен. Твоя ловкость — вот твой настоящий меч.'],['sloth','Если что — я громко поверю в тебя отсюда. Очень громко.'],['hero','И этого хватит. За Долину!']],
   8:[['panda','Помнишь, как ты потерялся в пещере ещё детёнышем? Мы искали тебя три дня.'],['sloth','Я нашёл первым. Потому что прилёг отдохнуть аккурат рядом с тобой.'],['hero','И до сих пор не вернул банан за спасение!']],
   9:[['sloth','Своды трещат. Прямо как мои колени по утрам.'],['panda','Страх — это тень. Посвети факелом воли — и тень отступит.'],['hero','Воли хватит. Бегом под обвалом.']],
   10:[['panda','Орки роют здесь не золото — твой страх. Не оставляй им добычи.'],['sloth','А я бы отдал. Страх тяжёлый, без него и спится крепче.'],['hero','Страх — вам. Себе оставлю победу.']],
@@ -420,7 +423,10 @@ function continueGame(){ const s=loadSave(); if(!s)return; hide('title');
   score=s.score||0; currentLevel=Math.min(s.level||0,META.length-1); upgraded=!!s.upgraded;
   playedCine={}; playedBanter={}; applyUpgradeState(); startLevelFlow(); }
 
-function startLevelFlow(){ playBanter(currentLevel, startInstance); }   // перед каждым уровнем — болтовня друзей (Дрём + Мастер Бо)
+function startLevelFlow(){   // сюжетный ролик блока (если есть) -> иначе болтовня друзей -> уровень
+  const cine=CINEMATICS[currentLevel];
+  if(cine && !playedCine[currentLevel]){ playedCine[currentLevel]=true; playCinematic(cine, startInstance); }
+  else playBanter(currentLevel, startInstance); }
 
 let endAction='restart';
 function endScreenG(title,s,btn,action){ document.getElementById('endTitle').textContent=title;
