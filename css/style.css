@@ -9,6 +9,9 @@
   #fsBtn{position:absolute;top:8px;right:8px;z-index:30;width:34px;height:34px;border:none;border-radius:8px;background:rgba(20,42,26,.5);color:#fff;font-size:17px;line-height:1;cursor:pointer;opacity:.45;transition:opacity .15s}
   #fsBtn:hover{opacity:1}
   @media (pointer:coarse){ #fsBtn{display:none} }
+  #muteBtn{position:absolute;top:8px;right:48px;z-index:30;width:34px;height:34px;border:none;border-radius:8px;background:rgba(20,42,26,.5);color:#fff;font-size:16px;line-height:1;cursor:pointer;opacity:.45;transition:opacity .15s}
+  #muteBtn:hover{opacity:1}
+  @media (pointer:coarse){ #muteBtn{right:8px;opacity:.8} }
   .overlay{position:absolute;inset:0;z-index:20;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(120% 90% at 50% 0%,rgba(63,157,74,.18),transparent 60%),rgba(20,42,26,.94);backdrop-filter:blur(2px)}
   .overlay.show{display:flex}
   #cutscene{background:linear-gradient(180deg,rgba(8,16,10,.55),rgba(20,42,26,.9));cursor:pointer}
