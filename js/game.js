@@ -45,7 +45,8 @@ Object.assign(TEX,{
   tile_ice:'assets/sprites/tile_ice.webp',
   b_spikes_ice:'assets/sprites/b_spikes_ice.webp', b_thorn_ice:'assets/sprites/b_thorn_ice.webp',
   b_stone_ice:'assets/sprites/b_stone_ice.webp', b_palisade_ice:'assets/sprites/b_palisade_ice.webp',
-  b_gate_ice:'assets/sprites/b_gate_ice.webp'
+  b_gate_ice:'assets/sprites/b_gate_ice.webp',
+  plat_cave:'assets/sprites/plat_cave.webp', plat_ice:'assets/sprites/plat_ice.webp', plat_swamp:'assets/sprites/plat_swamp.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -263,13 +264,13 @@ const BIOMES={
   jungle:{far:'bg_far',mid:'bg_mid',front:'bg_front',tile:'tile',
     obst:{spikes:'b_spikes',thorn:'b_thorn',stone:'b_stone',palisade:'b_palisade',gate:'b_gate'},
     boss:'spider',bossName:'ПАУК-СТРАЖ',tint:0xa6abb5,sky:0x0a1410},
-  swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',
+  swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',plat:'plat_swamp',
     obst:{spikes:'b_spikes_swamp',thorn:'b_thorn_swamp',stone:'b_stone_swamp',palisade:'b_palisade_swamp',gate:'b_gate_swamp'},
     boss:'boss_troll',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
-  cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',
+  cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',plat:'plat_cave',
     obst:{spikes:'b_spikes_cave',thorn:'b_thorn_cave',stone:'b_stone_cave',palisade:'b_palisade_cave',gate:'b_gate_cave'},
     ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ ПЕЩЕР',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
-  ice:{far:'ice_far',mid:'ice_mid',front:'ice_front',tile:'tile_ice',
+  ice:{far:'ice_far',mid:'ice_mid',front:'ice_front',tile:'tile_ice',plat:'plat_ice',
     obst:{spikes:'b_spikes_ice',thorn:'b_thorn_ice',stone:'b_stone_ice',palisade:'b_palisade_ice',gate:'b_gate_ice'},
     ref:'swamp',boss:'boss_troll',bossName:'ТРОЛЛЬ-ШАМАН',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
   sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile_sky',
@@ -319,7 +320,7 @@ function genLevel(idx){
     x+=platStep+Math.floor(R()*280); }
   const towerTops=[]; let tx=2200+Math.floor(R()*900);
   while(hasTowers && tx<W-1600){ if(!inGap(tx)){ const steps=3+Math.floor(R()*2); let sx=tx, sy=336;
-    for(let i=0;i<steps;i++){ platforms.push([sx,sy]);
+    for(let i=0;i<steps;i++){ platforms.push([sx,sy,1]);   // 1 = башенная ступень (мелкая, без декор-уступа)
       if(i>0 && R()<0.4) enemies.push({type:pickType(m.pool,R),x:sx,y:sy-46,min:sx-12,max:sx+12});   // узкая башенная плитка
       sx += (R()<0.5?-1:1)*(82+Math.floor(R()*20)); sy=Math.max(150,sy-(96+Math.floor(R()*18))); }
     towerTops.push([sx,sy]); } tx+=towerStep+Math.floor(R()*900); }
@@ -421,7 +422,12 @@ function create(){
       this.anims.create({key:'A_'+tex,frames:fr.map(k=>({key:k})),frameRate:4,repeat:-1}); }
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
-  cfg.platforms.forEach(p=>{ for(let i=-1;i<=1;i++) this.platforms.create(p[0]+i*40,p[1],TKEY); });
+  const PLAT=bvz.plat, platSrc=PLAT?this.textures.get(PLAT).getSourceImage():null;
+  cfg.platforms.forEach(p=>{ const decor=PLAT&&p[2]!==1;   // обычные платформы — художественный уступ; башенные ступени (p[2]==1) — мелкая плитка
+    for(let i=-1;i<=1;i++){ const t=this.platforms.create(p[0]+i*40,p[1],TKEY); if(decor)t.setVisible(false); }
+    if(decor){ const dw=136, dh=dw*platSrc.height/platSrc.width;
+      this.add.image(p[0],p[1]-26,PLAT).setOrigin(0.5,0).setDisplaySize(dw,dh).setDepth(-1); }
+  });
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
   this.player.setCollideWorldBounds(true);
