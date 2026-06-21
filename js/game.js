@@ -132,6 +132,31 @@ function showLoad(kind){ const ls=document.getElementById('loadscreen'); if(!ls)
 function hideLoad(){ const ls=document.getElementById('loadscreen'); if(!ls)return;
   setTimeout(()=>ls.classList.remove('show'), Math.max(0,650-(Date.now()-loadShownAt))); }
 
+/* ---- музыка (HTML5 Audio, луп + кроссфейд по биомам) ---- */
+// слот -> файл в assets/audio/. Меняй раскладку здесь, файлы переименовывать не нужно.
+const MUSIC={ menu:'moonstone', jungle:'moonstone', swamp:'murkwood', cave:'cloudgate3', ice:'vines', sky:'cloudgate5' };
+const MUSIC_DIR='assets/audio/', MUS_VOL=0.5;
+let musMuted=(localStorage.getItem('mute')==='1'), musTracks={}, musCurSlug=null, musCurEl=null, musInteracted=false, musFadeIv=null;
+function musTrack(slug){ if(!musTracks[slug]){ const a=new Audio(MUSIC_DIR+slug+'.mp3'); a.loop=true; a.preload='auto'; a.volume=0; musTracks[slug]=a; } return musTracks[slug]; }
+function playMusic(slot){ const slug=MUSIC[slot]; if(!slug||slug===musCurSlug) return;
+  const prev=musCurEl, next=musTrack(slug); musCurSlug=slug; musCurEl=next;
+  if(musMuted||!musInteracted) return;   // стартуем при первом взаимодействии (политика автоплея)
+  musFade(next,prev); }
+function musFade(next,prev){ if(musFadeIv)clearInterval(musFadeIv);
+  try{ next.currentTime=0; }catch(e){} next.volume=0; const p=next.play(); if(p&&p.catch)p.catch(()=>{});
+  const t0=Date.now(), dur=700, fromPrev=prev?prev.volume:0;
+  musFadeIv=setInterval(()=>{ const k=Math.min(1,(Date.now()-t0)/dur);
+    next.volume=musMuted?0:MUS_VOL*k; if(prev&&prev!==next) prev.volume=fromPrev*(1-k);
+    if(k>=1){ clearInterval(musFadeIv); musFadeIv=null; if(prev&&prev!==next)prev.pause(); } },40); }
+function musStart(){ if(musInteracted)return; musInteracted=true; if(!musMuted&&musCurEl)musFade(musCurEl,null); }
+function musToggle(){ musMuted=!musMuted; localStorage.setItem('mute',musMuted?'1':'0');
+  if(musMuted){ for(const k in musTracks)musTracks[k].pause(); }
+  else { musInteracted=true; if(musCurEl)musFade(musCurEl,null); }
+  const b=document.getElementById('muteBtn'); if(b)b.textContent=musMuted?'🔇':'🔊'; }
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,musStart));
+(function(){ const b=document.getElementById('muteBtn'); if(b){ b.textContent=musMuted?'🔇':'🔊'; b.onclick=e=>{e.stopPropagation();musToggle();}; }
+  playMusic('menu'); })();
+
 const STORY=[
  ["Чичо","Эй, мохнатый, проснулся? Отлично! У нас тут небольшая катастрофа."],
  ["Доня","...привет. Я Доня. Это Чичо. Он громкий."],
@@ -561,6 +586,7 @@ function create(){
     {fontFamily:'Trebuchet MS',fontSize:'34px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
+  playMusic(cfg.biome);   // музыка биома (один трек на блок, кроссфейд на границе)
 }
 
 // текстура врага по цепочке биомов: свой биом → ref-биом → базовая (если своего арта нет)
