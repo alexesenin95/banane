@@ -52,6 +52,15 @@
   .invCard img{width:40px;height:40px;object-fit:contain}
   .invCard .nm{font-size:10.5px;margin-top:5px;line-height:1.15}
   .invCard .lk{font-size:22px;height:40px;display:flex;align-items:center}
+  /* магазин наград */
+  #inventory{justify-content:flex-start;overflow-y:auto;padding-top:16px;padding-bottom:16px}
+  #shopGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;max-width:560px;margin:10px auto 14px}
+  .perkCard .perkIcon{font-size:26px;height:34px;display:flex;align-items:center;justify-content:center}
+  .perkCard .cost{font-size:10.5px;margin-top:3px;color:var(--banana);font-weight:700}
+  .perkCard.locked{opacity:.5;filter:grayscale(.5)}
+  .perkCard:not(.locked){border-color:#3f7d44}
+  .shopBal{font-size:13px;color:var(--banana);font-weight:400}
+  @media (max-width:560px){ #invGrid,#skinGrid,#shopGrid{grid-template-columns:repeat(4,1fr)} }
   .hintbar{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12px;color:rgba(255,255,255,.6)}
   #banter{cursor:pointer}
   #banEmoji{font-size:64px;line-height:1;margin:0 0 4px}
