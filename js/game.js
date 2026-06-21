@@ -193,13 +193,13 @@ function pickL(o){ if(o==null)return ''; if(typeof o==='string')return o; return
 function applyStaticLang(){ document.documentElement.lang=LANG;
   document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n');
     if(el.getAttribute('data-i18n-html')) el.innerHTML=t(k); else el.textContent=t(k); });
-  const lb=document.getElementById('langBtn'); if(lb) lb.textContent=(LANG==='ru'?'EN':'RU');
+  const lb=document.getElementById('langMenuBtn'); if(lb) lb.textContent=(LANG==='ru'?'🌐 English':'🌐 Русский');
   if(typeof refreshSoundBtn==='function') refreshSoundBtn();
   refreshContinueBtn(); }
 function setLang(l){ LANG=l; try{localStorage.setItem('lang',l);}catch(e){} applyStaticLang(); }
 function refreshContinueBtn(){ const b=document.getElementById('continueBtn'); if(!b)return; const s=loadSave&&loadSave();
   if(s&&typeof s.level==='number'&&s.level>0){ const n=Math.min(s.level,META.length-1)+1; b.style.display=''; b.textContent=t('continue_lvl').replace('{n}',n); } }
-(function(){ const b=document.getElementById('langBtn'); if(b) b.onclick=e=>{ e.stopPropagation(); setLang(LANG==='ru'?'en':'ru'); }; })();
+(function(){ const b=document.getElementById('langMenuBtn'); if(b) b.onclick=e=>{ e.stopPropagation(); setLang(LANG==='ru'?'en':'ru'); }; })();
 // экран загрузки: 'game' (логотип, первый запуск) / 'level' (путь по биомам, между уровнями)
 const LOADBG={game:'assets/ui/gameload.webp', level:'assets/ui/levelload.webp'};
 let loadShownAt=0;
