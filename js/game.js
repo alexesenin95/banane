@@ -88,7 +88,7 @@ const HEROES={
     sword:{idle:'dk_idle',run:['dk_run1','dk_run2'],jump:'dk_jump',attack:'dk_attack'},
     banana:{idle:'dk_nb_idle',run:['dk_nb_run1','dk_nb_run2'],jump:'dk_nb_jump',attack:'dk_nb_attack'}}
 };
-const SKINS=[ {id:'classic',name:'Классический',unlock:0}, {id:'gold',name:'Золотой',unlock:4}, {id:'dark',name:'Чёрный рыцарь',unlock:12} ];  // unlock = индекс уровня, по достижении которого образ открывается
+const SKINS=[ {id:'classic',name:'skin_classic',unlock:0}, {id:'gold',name:'skin_gold',unlock:8}, {id:'dark',name:'skin_dark',unlock:12} ];  // unlock = индекс уровня; золотой — после 8 уровня (с ур.9), чёрный рыцарь — после 12 (с ур.13)
 let selectedHero='classic';
 function HK(){ const h=HEROES[selectedHero]||HEROES.classic;
   if(h.sword) return (currentWeapon==='boomerang')?h.banana:h.sword;   // банан (бумеранг) -> без меча; меч (дубина) -> с мечом
@@ -108,16 +108,16 @@ const HERO_MAXHP=100, START_LIVES=3;          // у героя полоска HP
 const DMG={contact:22, proj:16, hazard:26};   // урон по герою от разных источников
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
 const WEAPON_LIST=[
- {id:'boomerang',name:'Банан',unlocked:true},
- {id:'club',name:'Меч',unlocked:true},
- {id:'spear',name:'Бамбуковое копьё',unlocked:false},
- {id:'sling',name:'Праща',unlocked:false},
- {id:'coconut',name:'Кокос-бомбы',unlocked:false},
- {id:'whip',name:'Лиана-хлыст',unlocked:false},
- {id:'blowgun',name:'Духовая трубка',unlocked:false},
- {id:'shuriken',name:'Костяные сюрикены',unlocked:false},
- {id:'torch',name:'Огненный факел',unlocked:false},
- {id:'staff',name:'Грозовой посох',unlocked:false}
+ {id:'boomerang',name:'w_boomerang',unlocked:true},
+ {id:'club',name:'w_club',unlocked:true},
+ {id:'spear',name:'w_spear',unlocked:false},
+ {id:'sling',name:'w_sling',unlocked:false},
+ {id:'coconut',name:'w_coconut',unlocked:false},
+ {id:'whip',name:'w_whip',unlocked:false},
+ {id:'blowgun',name:'w_blowgun',unlocked:false},
+ {id:'shuriken',name:'w_shuriken',unlocked:false},
+ {id:'torch',name:'w_torch',unlocked:false},
+ {id:'staff',name:'w_staff',unlocked:false}
 ];
 let currentWeapon='boomerang', upgraded=false;
 let game=null, chosenWeapon=null, currentLevel=0;
@@ -128,6 +128,78 @@ function resetPerks(s){ scoreMul=1; dmgMul=1; heroSpeedMul=1; heroJumpMul=1; mag
 const TOUCH={left:false,right:false,jump:false};   // состояние сенсорных кнопок (читается в update)
 const show=id=>document.getElementById(id).classList.add('show');
 const hide=id=>document.getElementById(id).classList.remove('show');
+
+/* ===================== Локализация / Localization ===================== */
+let LANG=(localStorage.getItem('lang')||'ru');
+const I18N={ ru:{
+  game_title:'Банан против орков', title_eyebrow:'долина животных · вторжение',
+  title_sub:'Орки и креветки вторглись в Долину животных. Поднимайся, герой.',
+  btn_newgame:'Начать заново', btn_exit:'Выход',
+  title_hint:'Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь',
+  bye_title:'До новых встреч! 🍌', bye_sub:'Долина будет ждать своего героя.', bye_btn:'Вернуться в меню',
+  cut_eyebrow:'встреча с врагом', cut_hint:'клик — продолжить', cut_next:'Дальше →', cut_last:'В бой →',
+  inv_eyebrow:'инвентарь', inv_weapons:'Оружие', inv_skin:'Образ героя', inv_rewards:'Награды за бананы',
+  inv_close:'Закрыть (I)', inv_hint:'очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь',
+  cine_skip:'Пропустить всё', cine_prev:'← Назад', cine_next:'Дальше →', cine_battle:'В бой ▶', cine_tutorial:'К обучению ▶', cine_finish:'Завершить ▶',
+  tut_eyebrow:'как играть', tut_title:'Управление', tut_move:'Бег влево / вправо', tut_jump_k:'Пробел / ↑', tut_jump:'Прыжок',
+  tut_atk_k:'X / клик', tut_atk:'Атака оружием', tut_weap:'Сменить оружие: банан-бумеранг / меч', tut_inv:'Инвентарь и магазин наград', tut_armor:'Броня — неуязвимость 5 сек за очки',
+  tut_tip:'🍌 Собирай бананы и бей орков — за это начисляются очки. Трать их в инвентаре (клавиша I, на телефоне — ☰) на усиления-награды.',
+  tut_warn:'🦘 Обязательно купи в наградах СУПЕР-ПРЫЖОК! Некоторые высокие стены и широкие пропасти можно преодолеть только с ним.',
+  tut_mob:'📱 На телефоне управление — кнопками прямо на экране.', tut_start:'В БОЙ! ▶',
+  ban_eyebrow:'перед боем · друзья рядом', ban_skip:'пропустить →', ban_next:'Дальше →', ban_last:'В путь →',
+  loading:'Загрузка…', rotate:'Поверни телефон<br>в альбомную ориентацию',
+  sound_on:'Звук: вкл', sound_off:'Звук: выкл', continue:'Продолжить', continue_lvl:'Продолжить (ур. {n})',
+  end_next:'Дальше →', end_playagain:'Сыграть снова', end_retry:'Ещё раз', end_score:'Очки: ',
+  lvl_cleared:'Уровень {n} пройден!', valley_saved:'Долина спасена! 🎉', game_over:'Игра окончена',
+  hud_score:'Очки', hud_lives:'Жизни', hud_level:'Уровень', hud_hint:'B — броня (500🍌)   I — инвентарь', hud_admin:'[ ] — уровень (admin)   ',
+  level_word:'Уровень', weapon_upg:'Оружие улучшено!', armor_on:'БРОНЯ 5 сек!', checkpoint:'Чекпоинт!', level_restart:'Уровень заново', skin_from:'с ур. {n}',
+  perk_heal:'Полное здоровье', perk_shield:'Бессмертие 5 сек', perk_life:'+1 жизнь', perk_rage:'Ярость ×2 урон · 12 сек', perk_speed:'Скорость +60% · 12 сек',
+  perk_jump:'Супер-прыжок · 12 сек', perk_magnet:'Магнит бананов · 15 сек', perk_freeze:'Заморозка врагов · 6 сек', perk_storm:'Банановый шторм (урон всем)', perk_x2:'Двойные очки · 20 сек',
+  boss_spider:'ПАУК-СТРАЖ', boss_king:'ТРОЛЛЬ-ВОЖАК', boss_crystal:'КРИСТАЛЬНЫЙ ГОЛЕМ', boss_ice:'ЛЕДЯНОЙ ТИТАН', boss_warlord:'ВЛАСТЕЛИН ТЕНИ',
+  w_boomerang:'Банан', w_club:'Меч', w_spear:'Бамбуковое копьё', w_sling:'Праща', w_coconut:'Кокос-бомбы', w_whip:'Лиана-хлыст', w_blowgun:'Духовая трубка', w_shuriken:'Костяные сюрикены', w_torch:'Огненный факел', w_staff:'Грозовой посох',
+  skin_classic:'Классический', skin_gold:'Золотой', skin_dark:'Чёрный рыцарь', inv_bal:'· у тебя {n} 🍌',
+  spk_sloth:'Дрём', spk_panda:'Мастер Бо', spk_hero:'Банан', spk_orc:'Орк', spk_hero2:'Герой', spk_orc_cpl:'Орк-капрал', spk_orc_gd:'Орк-страж'
+}, en:{
+  game_title:'Banana vs Orcs', title_eyebrow:'valley of animals · invasion',
+  title_sub:'Orcs and shrimp have invaded the Valley of Animals. Rise, hero.',
+  btn_newgame:'New game', btn_exit:'Exit',
+  title_hint:'Arrows — move · Space — jump · X / click — attack · 1 / 2 — switch weapon · ♥ — life',
+  bye_title:'See you soon! 🍌', bye_sub:'The Valley will await its hero.', bye_btn:'Back to menu',
+  cut_eyebrow:'facing the enemy', cut_hint:'click — continue', cut_next:'Next →', cut_last:'To battle →',
+  inv_eyebrow:'inventory', inv_weapons:'Weapons', inv_skin:'Hero skin', inv_rewards:'Banana rewards',
+  inv_close:'Close (I)', inv_hint:'points from bananas and kills buy rewards · click a reward to buy · I — inventory',
+  cine_skip:'Skip all', cine_prev:'← Back', cine_next:'Next →', cine_battle:'To battle ▶', cine_tutorial:'To controls ▶', cine_finish:'Finish ▶',
+  tut_eyebrow:'how to play', tut_title:'Controls', tut_move:'Run left / right', tut_jump_k:'Space / ↑', tut_jump:'Jump',
+  tut_atk_k:'X / click', tut_atk:'Attack with weapon', tut_weap:'Switch weapon: banana-rang / sword', tut_inv:'Inventory & rewards shop', tut_armor:'Armor — 5 sec invincibility for points',
+  tut_tip:'🍌 Collect bananas and smash orcs to earn points. Spend them in the inventory (key I, ☰ on mobile) on reward boosts.',
+  tut_warn:'🦘 Be sure to buy the SUPER JUMP reward! Some tall walls and wide chasms can be crossed ONLY with it.',
+  tut_mob:'📱 On mobile, control with the on-screen buttons.', tut_start:'TO BATTLE! ▶',
+  ban_eyebrow:'before battle · friends at your side', ban_skip:'skip →', ban_next:'Next →', ban_last:'Onward →',
+  loading:'Loading…', rotate:'Rotate your phone<br>to landscape',
+  sound_on:'Sound: on', sound_off:'Sound: off', continue:'Continue', continue_lvl:'Continue (lvl {n})',
+  end_next:'Next →', end_playagain:'Play again', end_retry:'Retry', end_score:'Score: ',
+  lvl_cleared:'Level {n} cleared!', valley_saved:'Valley saved! 🎉', game_over:'Game over',
+  hud_score:'Score', hud_lives:'Lives', hud_level:'Level', hud_hint:'B — armor (500🍌)   I — inventory', hud_admin:'[ ] — level (admin)   ',
+  level_word:'Level', weapon_upg:'Weapon upgraded!', armor_on:'ARMOR 5 sec!', checkpoint:'Checkpoint!', level_restart:'Level restart', skin_from:'from lvl {n}',
+  perk_heal:'Full health', perk_shield:'Invincible 5 sec', perk_life:'+1 life', perk_rage:'Rage ×2 damage · 12 sec', perk_speed:'Speed +60% · 12 sec',
+  perk_jump:'Super jump · 12 sec', perk_magnet:'Banana magnet · 15 sec', perk_freeze:'Freeze enemies · 6 sec', perk_storm:'Banana storm (hit all)', perk_x2:'Double points · 20 sec',
+  boss_spider:'GUARDIAN SPIDER', boss_king:'TROLL CHIEFTAIN', boss_crystal:'CRYSTAL GOLEM', boss_ice:'ICE TITAN', boss_warlord:'SHADOW LORD',
+  w_boomerang:'Banana', w_club:'Sword', w_spear:'Bamboo spear', w_sling:'Sling', w_coconut:'Coconut bombs', w_whip:'Vine whip', w_blowgun:'Blowgun', w_shuriken:'Bone shuriken', w_torch:'Fire torch', w_staff:'Storm staff',
+  skin_classic:'Classic', skin_gold:'Golden', skin_dark:'Black knight', inv_bal:'· you have {n} 🍌',
+  spk_sloth:'Snooze', spk_panda:'Master Bo', spk_hero:'Banan', spk_orc:'Orc', spk_hero2:'Hero', spk_orc_cpl:'Orc Corporal', spk_orc_gd:'Orc Sentry'
+}};
+function t(k){ const s=I18N[LANG]; const v=(s&&s[k]!=null)?s[k]:I18N.ru[k]; return v!=null?v:k; }
+function pickL(o){ if(o==null)return ''; if(typeof o==='string')return o; return (o[LANG]!=null?o[LANG]:o.ru); }
+function applyStaticLang(){ document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const k=el.getAttribute('data-i18n');
+    if(el.getAttribute('data-i18n-html')) el.innerHTML=t(k); else el.textContent=t(k); });
+  const lb=document.getElementById('langBtn'); if(lb) lb.textContent=(LANG==='ru'?'EN':'RU');
+  if(typeof refreshSoundBtn==='function') refreshSoundBtn();
+  refreshContinueBtn(); }
+function setLang(l){ LANG=l; try{localStorage.setItem('lang',l);}catch(e){} applyStaticLang(); }
+function refreshContinueBtn(){ const b=document.getElementById('continueBtn'); if(!b)return; const s=loadSave&&loadSave();
+  if(s&&typeof s.level==='number'&&s.level>0){ const n=Math.min(s.level,META.length-1)+1; b.style.display=''; b.textContent=t('continue_lvl').replace('{n}',n); } }
+(function(){ const b=document.getElementById('langBtn'); if(b) b.onclick=e=>{ e.stopPropagation(); setLang(LANG==='ru'?'en':'ru'); }; })();
 // экран загрузки: 'game' (логотип, первый запуск) / 'level' (путь по биомам, между уровнями)
 const LOADBG={game:'assets/ui/gameload.webp', level:'assets/ui/levelload.webp'};
 let loadShownAt=0;
@@ -226,7 +298,7 @@ function nextStory(){storyI++;if(storyI>=STORY.length){hide('intro');show('dialo
 document.getElementById('startBtn').onclick=()=>{ selectedHero='classic'; hide('title'); playCinematic(INTRO_STORY,showTutorial); };   // ролик -> обучение -> игра (без выбора оружия)
 function showTutorial(){ show('tutorial'); }
 document.getElementById('tutStart').onclick=()=>{ hide('tutorial'); startGame('boomerang'); };   // стартовое оружие — банан-бумеранг, меняется клавишей 2 / в инвентаре
-function refreshSoundBtn(){ const b=document.getElementById('soundBtn'); if(b)b.textContent='Звук: '+(musMuted?'выкл':'вкл'); }
+function refreshSoundBtn(){ const b=document.getElementById('soundBtn'); if(b)b.textContent=t(musMuted?'sound_off':'sound_on'); }
 (function(){ const sb=document.getElementById('soundBtn'); if(sb){ refreshSoundBtn(); sb.onclick=e=>{ e.stopPropagation(); musToggle(); refreshSoundBtn(); }; }
   const xb=document.getElementById('exitBtn'); if(xb) xb.onclick=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} hide('title'); show('byeScreen'); try{ window.close(); }catch(e){} };
   const yb=document.getElementById('byeBtn'); if(yb) yb.onclick=()=>{ hide('byeScreen'); show('title'); }; })();
@@ -247,7 +319,7 @@ function buildInvGrid(){
     if(w.unlocked){ const im=document.createElement('img'); im.src=weaponIconURI(w.id); card.appendChild(im);
       card.onclick=()=>{ currentWeapon=w.id; if(activeScene){updateWeaponHUD(activeScene);applyHeroLook(activeScene);} closeInventory(); };
     } else { const lk=document.createElement('div'); lk.className='lk'; lk.textContent='🔒'; card.appendChild(lk); }
-    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=w.name; card.appendChild(nm);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=t(w.name); card.appendChild(nm);
     g.appendChild(card);
   });
 }
@@ -258,7 +330,7 @@ function buildSkinGrid(){
     if(open){ const im=document.createElement('img'); im.src=skinCardImg(sk.id); card.appendChild(im);
       card.onclick=()=>selectSkin(sk.id); }
     else { const lk=document.createElement('div'); lk.className='lk'; lk.textContent='🔒'; card.appendChild(lk); }
-    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=open?sk.name:('Блок '+(Math.floor(sk.unlock/4)+1)); card.appendChild(nm);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=open?t(sk.name):t('skin_from').replace('{n}',sk.unlock+1); card.appendChild(nm);
     g.appendChild(card);
   });
 }
@@ -268,37 +340,37 @@ function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id; applyHero
 function _timed(s,fn,ms){ s.time.delayedCall(ms,fn); }
 function grantInvuln(s,ms){ const p=s.player; if(!p)return; sfx('armor'); p.invuln=true; p.armor=true; p.setTint(0xffe27a);
   _timed(s,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } },ms); }
-function perkBanner(s,txt){ const t=s.add.text(400,108,txt,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'18px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
-  s.tweens.add({targets:t,y:88,alpha:0,duration:1100,onComplete:()=>t.destroy()}); }
+function perkBanner(s,txt){ const tt=s.add.text(400,108,txt,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'18px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+  s.tweens.add({targets:tt,y:88,alpha:0,duration:1100,onComplete:()=>tt.destroy()}); }
 function bananaStorm(s){ const x0=s.cameras.main.scrollX-60, x1=s.cameras.main.scrollX+860;
   s.enemies.children.iterate(e=>{ if(e&&e.active&&e.x>x0&&e.x<x1) damageEnemy(e,e.isBoss?8:99); });
   s.cameras.main.flash(240,255,232,120); return true; }
 function freezeEnemies(s,ms){ s.freezeUntil=s.time.now+ms;
   _timed(s,()=>{ if(s.enemies) s.enemies.children.iterate(e=>{ if(e&&e.active)e.clearTint(); }); },ms); return true; }
 const PERKS=[
-  {id:'heal',  icon:'💚', name:'Полное здоровье',          cost:150, fn:s=>{ heroHP=HERO_MAXHP; return true; }},
-  {id:'shield',icon:'🛡️', name:'Бессмертие 5 сек',          cost:300, fn:s=>{ grantInvuln(s,5000); return true; }},
-  {id:'life',  icon:'❤️', name:'+1 жизнь',                  cost:350, fn:s=>{ lives=Math.min(lives+1,9); return true; }},
-  {id:'rage',  icon:'⚔️', name:'Ярость ×2 урон · 12 сек',   cost:300, fn:s=>{ dmgMul=2; _timed(s,()=>dmgMul=1,12000); return true; }},
-  {id:'speed', icon:'👟', name:'Скорость +60% · 12 сек',    cost:200, fn:s=>{ heroSpeedMul=1.6; _timed(s,()=>heroSpeedMul=1,12000); return true; }},
-  {id:'jump',  icon:'🦘', name:'Супер-прыжок · 12 сек',     cost:200, fn:s=>{ heroJumpMul=1.35; _timed(s,()=>heroJumpMul=1,12000); return true; }},
-  {id:'magnet',icon:'🧲', name:'Магнит бананов · 15 сек',   cost:200, fn:s=>{ magnetUntil=s.time.now+15000; return true; }},
-  {id:'freeze',icon:'❄️', name:'Заморозка врагов · 6 сек',  cost:350, fn:s=>freezeEnemies(s,6000)},
-  {id:'storm', icon:'🍌', name:'Банановый шторм (урон всем)',cost:500, fn:bananaStorm},
-  {id:'x2',    icon:'✨', name:'Двойные очки · 20 сек',      cost:300, fn:s=>{ scoreMul=2; _timed(s,()=>scoreMul=1,20000); return true; }}
+  {id:'heal',  icon:'💚', name:'perk_heal',   cost:150, fn:s=>{ heroHP=HERO_MAXHP; return true; }},
+  {id:'shield',icon:'🛡️', name:'perk_shield', cost:300, fn:s=>{ grantInvuln(s,5000); return true; }},
+  {id:'life',  icon:'❤️', name:'perk_life',   cost:350, fn:s=>{ lives=Math.min(lives+1,9); return true; }},
+  {id:'rage',  icon:'⚔️', name:'perk_rage',   cost:300, fn:s=>{ dmgMul=2; _timed(s,()=>dmgMul=1,12000); return true; }},
+  {id:'speed', icon:'👟', name:'perk_speed',  cost:200, fn:s=>{ heroSpeedMul=1.6; _timed(s,()=>heroSpeedMul=1,12000); return true; }},
+  {id:'jump',  icon:'🦘', name:'perk_jump',   cost:200, fn:s=>{ heroJumpMul=1.35; _timed(s,()=>heroJumpMul=1,12000); return true; }},
+  {id:'magnet',icon:'🧲', name:'perk_magnet', cost:200, fn:s=>{ magnetUntil=s.time.now+15000; return true; }},
+  {id:'freeze',icon:'❄️', name:'perk_freeze', cost:350, fn:s=>freezeEnemies(s,6000)},
+  {id:'storm', icon:'🍌', name:'perk_storm',  cost:500, fn:bananaStorm},
+  {id:'x2',    icon:'✨', name:'perk_x2',      cost:300, fn:s=>{ scoreMul=2; _timed(s,()=>scoreMul=1,20000); return true; }}
 ];
 function buildShopGrid(){ const g=document.getElementById('shopGrid'); if(!g)return; g.innerHTML='';
-  const bal=document.getElementById('shopBal'); if(bal)bal.textContent='· у тебя '+score+' 🍌';
+  const bal=document.getElementById('shopBal'); if(bal)bal.textContent=t('inv_bal').replace('{n}',score);
   PERKS.forEach(pk=>{ const ok=score>=pk.cost;
     const card=document.createElement('div'); card.className='invCard perkCard'+(ok?'':' locked');
     const ic=document.createElement('div'); ic.className='perkIcon'; ic.textContent=pk.icon; card.appendChild(ic);
-    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=pk.name; card.appendChild(nm);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=t(pk.name); card.appendChild(nm);
     const ct=document.createElement('div'); ct.className='cost'; ct.textContent=pk.cost+' 🍌'; card.appendChild(ct);
     if(ok) card.onclick=()=>buyPerk(pk.id);
     g.appendChild(card); }); }
 function buyPerk(id){ const pk=PERKS.find(p=>p.id===id); if(!pk||!activeScene||score<pk.cost)return;
   const s=activeScene; closeInventory();   // закрываем магазин и запускаем эффект в бою
-  score-=pk.cost; if(pk.fn(s)===false){ score+=pk.cost; } else { perkBanner(s,pk.icon+' '+pk.name); sfx('perk'); }
+  score-=pk.cost; if(pk.fn(s)===false){ score+=pk.cost; } else { perkBanner(s,pk.icon+' '+t(pk.name)); sfx('perk'); }
   updateHud(s); }
 function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); buildShopGrid(); show('inventory'); }
 function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); }
@@ -308,38 +380,54 @@ document.addEventListener('keydown',e=>{ if(e.code==='KeyI'){ if(pauseReason==='
 /* ---- cutscene ---- */
 let cutLines=[], cutI=0, activeScene=null, currentCut=null;
 function startCut(scene,cut){ cutLines=cut.lines; cutI=0; currentCut=cut; paused=true; pauseReason='cut'; scene.physics.pause(); activeScene=scene; renderCut(); show('cutscene'); }
-function renderCut(){const [spk,txt]=cutLines[cutI];
-  document.getElementById('cutSpk').textContent=spk; document.getElementById('cutText').textContent='«'+txt+'»';
-  const img=document.getElementById('cutPortrait'); const src=spk.indexOf('Орк')===0?ORC:HERO;
+function quote(s){ return LANG==='en'?('“'+s+'”'):('«'+s+'»'); }
+function renderCut(){const ln=cutLines[cutI]; const role=ln[0], txt=(LANG==='en'&&ln[2]!=null)?ln[2]:ln[1];
+  document.getElementById('cutSpk').textContent=t('spk_'+role); document.getElementById('cutText').textContent=quote(txt);
+  const img=document.getElementById('cutPortrait'); const src=role==='hero'?HERO:ORC;
   img.src=src;img.style.display='block';img.style.animation='none';void img.offsetWidth;img.style.animation='';
-  document.getElementById('cutNext').textContent=(cutI>=cutLines.length-1)?'В бой →':'Дальше →';}
+  document.getElementById('cutNext').textContent=t(cutI>=cutLines.length-1?'cut_last':'cut_next');}
 function advanceCut(){ cutI++; if(cutI>=cutLines.length){ hide('cutscene'); paused=false; pauseReason=null;
   if(activeScene){ activeScene.physics.resume(); if(currentCut&&currentCut.spawn) spawnSquad(activeScene,currentCut.spawn);} return;} renderCut(); }
 document.getElementById('cutscene').onclick=advanceCut;
 
 /* ---- кино-панели (драматичное интро этапа) ---- */
-const CINEMATICS={ 4:{ endLabel:'В бой ▶',
+const CINEMATICS={ 4:{ endLabel:'cine_battle',
   panels:['assets/cutscenes/c_swamp1.webp','assets/cutscenes/c_swamp2.webp','assets/cutscenes/c_swamp3.webp','assets/cutscenes/c_swamp4.webp','assets/cutscenes/c_swamp5.webp'],
   texts:['Там, где когда-то цвели джунгли его детства, теперь чернела топь. Орки осушили живой лес до гнили и тлена. Банан ступил на шаткий мост — и сердце сжалось: от родного дома остались лишь мёртвые деревья да чужие флаги вдали.',
          'За пеленой тумана он увидел то, от чего застыла кровь: клетки. Звери Долины — соседи, друзья его детства — томились в неволе, согнанные орками на работы. Их глаза давно разучились надеяться.',
          'Ярость вспыхнула в груди. Банан ворвался в лагерь, и плечом к плечу встал верный Мастер Бо. Орки не ждали бури — а буря не щадила. Замки трещали, клетки распахивались: с каждым ударом возвращалась свобода.',
          'Освобождённые звери обступили героя, дрожа и плача от счастья. «Спасибо… но мы не последние», — шептали они, указывая во тьму топей. «Там, дальше, ещё сотни наших. Все ждут. Все верят, что кто-то придёт».',
-         'Банан поднялся на утёс и окинул взглядом бескрайнюю топь, тонущую в рассвете. Где-то там, в дыму и тумане, томились его братья и сёстры. Он сжал оружие. «Я приду за каждым. Слышите? За каждым».'] },
-  8:{ endLabel:'В бой ▶',
+         'Банан поднялся на утёс и окинул взглядом бескрайнюю топь, тонущую в рассвете. Где-то там, в дыму и тумане, томились его братья и сёстры. Он сжал оружие. «Я приду за каждым. Слышите? За каждым».'],
+  en:['Where the jungle of his childhood once bloomed, a black mire now spread. The orcs had drained the living forest to rot and decay. Banan stepped onto a rickety bridge — and his heart clenched: of his home, only dead trees and distant alien banners remained.',
+      'Beyond the veil of fog he saw a thing that froze his blood: cages. The beasts of the Valley — neighbors, friends of his childhood — languished in bondage, driven to labor by the orcs. Their eyes had long forgotten how to hope.',
+      'Fury blazed in his chest. Banan stormed the camp, and loyal Master Bo stood shoulder to shoulder with him. The orcs did not expect a storm — and the storm showed no mercy. Locks cracked, cages flew open: with every blow, freedom returned.',
+      'The freed beasts surrounded the hero, trembling and weeping with joy. “Thank you… but we are not the last,” they whispered, pointing into the dark of the mire. “Out there, hundreds more of us. All waiting. All believing someone will come.”',
+      'Banan climbed a cliff and gazed over the endless mire drowning in the dawn. Somewhere out there, in smoke and fog, his brothers and sisters suffered. He gripped his weapon. “I will come for every one of them. Do you hear? For every one.”'] },
+  8:{ endLabel:'cine_battle',
   panels:['assets/cutscenes/c_cave1.webp','assets/cutscenes/c_cave2.webp','assets/cutscenes/c_cave3.webp','assets/cutscenes/c_cave4.webp','assets/cutscenes/c_cave5.webp'],
   texts:['У самого входа в пещеры Банана встретили беглецы — измождённые, перепачканные рудой звери. «Ты тот самый? — выдохнул старший. — Тот, кто ломает клетки?» Их дрожащие лапы тянулись к нему, как к последней надежде.',
          'В тусклом свете фонаря они рассказали страшное: глубоко в рудниках орки согнали сотни пленников — копать руду до последнего вздоха. «Там наши дети, наши старики. Они не продержатся долго».',
          'Решение пришло само. «Дрём, Бо — выводите спасённых к свету. Я задержу орков». Ленивец и панда повели колонну измученных зверей прочь, в безопасность, — а Банан остался один лицом к тьме.',
          'Он вышел к сердцу рудника — и замер. Внизу кишела целая армия орков: кузни, цепи, плети надсмотрщиков. Один против тысячи. Но за его спиной уходили те, кого он поклялся спасти.',
-         'Банан крепче сжал оружие и шагнул навстречу орде. «Бегите и не оглядывайтесь, — шепнул он друзьям. — Я куплю вам время. Столько, сколько смогу». И кристальная пещера вспыхнула от первого удара.'] },
-  12:{ endLabel:'В бой ▶',
+         'Банан крепче сжал оружие и шагнул навстречу орде. «Бегите и не оглядывайтесь, — шепнул он друзьям. — Я куплю вам время. Столько, сколько смогу». И кристальная пещера вспыхнула от первого удара.'],
+  en:['At the very mouth of the caves, fugitives met Banan — gaunt beasts smeared with ore. “Are you the one?” the eldest breathed. “The one who breaks the cages?” Their trembling paws reached for him like a last hope.',
+      'By dim lantern light they told a terrible tale: deep in the mines the orcs had herded hundreds of captives — to dig ore until their last breath. “Our children are down there, our elders. They won’t last long.”',
+      'The choice made itself. “Snooze, Bo — lead the rescued to the light. I’ll hold the orcs.” The sloth and the panda led the column of weary beasts away to safety — and Banan stayed alone, facing the dark.',
+      'He came out to the heart of the mine — and froze. Below swarmed a whole army of orcs: forges, chains, overseers’ whips. One against a thousand. But behind him walked away those he had sworn to save.',
+      'Banan gripped his weapon tighter and stepped toward the horde. “Run and don’t look back,” he whispered to his friends. “I’ll buy you time. As much as I can.” And the crystal cavern blazed with the first blow.'] },
+  12:{ endLabel:'cine_battle',
   panels:['assets/cutscenes/c_ice1.webp','assets/cutscenes/c_ice2.webp','assets/cutscenes/c_ice3.webp','assets/cutscenes/c_ice4.webp','assets/cutscenes/c_ice5.webp'],
   texts:['Дальше дорога вела в стылую белую тишину. Там, где Банан помнил тёплые джунгли и пение птиц, теперь застыл ледник — пальмы вмёрзли в лёд, реки окаменели. Холод пробирал не кожу, а саму память.',
          'У замёрзшего пруда он опустился на колено. Подо льдом ещё теплился крошечный огонёк — последний живой цветок Долины. И вдруг воздух задрожал, наполняясь тёплым светом…',
          'Из сияния северного неба вышли двое. Банан узнал их сразу — сердцем, которое помнило их всю жизнь. Мама. Папа. Духи родителей, которых орки забрали в ту страшную ночь.',
          '«Сынок… как же ты вырос. Мы гордимся тобой», — прошелестели они, окутывая его тёплым светом. По щекам героя покатились слёзы: впервые за долгие годы он снова был просто их ребёнком.',
-         'Банан поднялся и вскинул меч к небу, и слёзы его блеснули сталью. «Ради вас я верну Долине весну! Растоплю этот лёд, верну нашу природу! ОРКИ — ПАДУТ!» Духи улыбнулись — и растаяли в рассвете.'] },
-  16:{ endLabel:'В бой ▶',
+         'Банан поднялся и вскинул меч к небу, и слёзы его блеснули сталью. «Ради вас я верну Долине весну! Растоплю этот лёд, верну нашу природу! ОРКИ — ПАДУТ!» Духи улыбнулись — и растаяли в рассвете.'],
+  en:['Onward the road led into chill white silence. Where Banan remembered warm jungles and birdsong, a glacier now lay frozen — palms locked in ice, rivers turned to stone. The cold gnawed not at his skin, but at memory itself.',
+      'By a frozen pond he sank to one knee. Beneath the ice a tiny ember still glowed — the last living flower of the Valley. And suddenly the air trembled, filling with warm light…',
+      'From the glow of the northern sky two figures stepped forth. Banan knew them at once — with the heart that had remembered them all his life. Mother. Father. The spirits of the parents the orcs had taken that terrible night.',
+      '“Son… how you’ve grown. We are proud of you,” they rustled, wrapping him in warm light. Tears rolled down the hero’s cheeks: for the first time in years he was simply their child again.',
+      'Banan rose and raised his sword to the sky, and his tears gleamed like steel. “For you I will bring spring back to the Valley! I’ll melt this ice, I’ll restore our nature! THE ORCS — WILL FALL!” The spirits smiled — and melted into the dawn.'] },
+  16:{ endLabel:'cine_battle',
   panels:['assets/cutscenes/c_sky1.webp','assets/cutscenes/c_sky2.webp','assets/cutscenes/c_sky3.webp','assets/cutscenes/c_sky4.webp','assets/cutscenes/c_sky5.webp','assets/cutscenes/c_sky6.webp','assets/cutscenes/c_sky7.webp','assets/cutscenes/c_sky8.webp'],
   texts:['Дорога привела Банана к Небесным Вратам — последнему рубежу. Среди парящих островов и древних храмов собралась вся Долина: тысячи зверей, что он освободил по пути. А вдали, в багровом зареве, ждала крепость Властелина Теней.',
          'Там, за стенами огня, восседал он — Тёмный Властелин орков. Тот, кто сжёг джунгли, заковал народы в цепи и отнял у Банана родителей. Главный враг. Конец пути — или его, или героя.',
@@ -348,9 +436,17 @@ const CINEMATICS={ 4:{ endLabel:'В бой ▶',
          'И поднялось небывалое войско. Многотысячные легионы союза зверей — обезьяны, медведи, лоси, барсуки — встали стеной под знамёнами Долины. Земля гудела от их поступи. Впервые за годы орки ощутили страх.',
          'Грянул бой. Звериные легионы обрушились на орков и троллей, и Небесные Врата содрогнулись от рёва тысяч глоток. Клык о клинок, сталь о сталь — союз зверей теснил орду назад, шаг за шагом.',
          'Пока армии схлестнулись, Банан рванул вперёд — один, сквозь огонь и хаос. Орки бежали перед натиском зверей, а он мчался по мостам к самому сердцу крепости. Каждый шаг приближал расплату.',
-         'И вот они — врата замка, дышащие пламенем и злобой. Дальше Банан должен пройти один. За спиной — целый народ, впереди — Тёмный Властелин. Он стиснул оружие и шагнул во тьму. Пора покончить с этим. НАВСЕГДА.'] } };
+         'И вот они — врата замка, дышащие пламенем и злобой. Дальше Банан должен пройти один. За спиной — целый народ, впереди — Тёмный Властелин. Он стиснул оружие и шагнул во тьму. Пора покончить с этим. НАВСЕГДА.'],
+  en:['The road brought Banan to the Sky Gates — the final stand. Among floating islands and ancient temples the whole Valley had gathered: thousands of beasts he had freed along the way. And far off, in a crimson glow, waited the fortress of the Shadow Lord.',
+      'There, behind walls of fire, he sat enthroned — the Dark Lord of the orcs. The one who burned the jungle, chained the peoples, and took Banan’s parents. The arch-enemy. The end of the road — his, or the hero’s.',
+      '“We came through this together, little one,” said Master Bo, laying a paw on his shoulder. “And I didn’t fall asleep once in battle. Almost,” Snooze grinned. Banan nodded: the time had come.',
+      'The beast chieftains bent over the map. Lion, bear, panda — all who once hid in the forests now stood shoulder to shoulder. The plan was simple and terrible: the army would draw off the horde, and Banan would break through to the Lord alone.',
+      'And an army beyond reckoning arose. The many-thousand legions of the beast alliance — monkeys, bears, elk, badgers — stood like a wall beneath the Valley’s banners. The earth hummed with their tread. For the first time in years, the orcs felt fear.',
+      'Battle erupted. The beast legions crashed into the orcs and trolls, and the Sky Gates shook with the roar of a thousand throats. Fang against blade, steel against steel — the alliance drove the horde back, step by step.',
+      'While the armies clashed, Banan rushed forward — alone, through fire and chaos. The orcs fled before the beasts’ onslaught, and he raced across the bridges to the very heart of the fortress. Each step brought the reckoning closer.',
+      'And there they were — the castle gates, breathing flame and malice. From here Banan must go alone. Behind him, a whole people; ahead, the Dark Lord. He gripped his weapon and stepped into the dark. Time to end this. FOREVER.'] } };
 // вступительный ролик (история героя) — играет один раз в начале новой игры, перед первым уровнем
-const INTRO_STORY={ endLabel:'К обучению ▶',
+const INTRO_STORY={ endLabel:'cine_tutorial',
   panels:['assets/cutscenes/c_intro1.webp','assets/cutscenes/c_intro2.webp','assets/cutscenes/c_intro3.webp',
           'assets/cutscenes/c_intro4.webp','assets/cutscenes/c_intro5.webp','assets/cutscenes/c_intro6.webp','assets/cutscenes/c_intro7.webp'],
   texts:[
@@ -361,9 +457,17 @@ const INTRO_STORY={ endLabel:'К обучению ▶',
     'Годы текли, как горные ручьи. На каменной площадке под облаками малыш рос и креп. Хранители учили его не только бить и прыгать, но и подниматься после каждого падения. «Сила — в сердце, Банан», — повторяли они. И сердце его закалялось.',
     'И вот настал тот день. На краю утёса стоял уже не детёныш, а воин — с оружием в руках и огнём в груди. За спиной остались приютившие его горы. Впереди, в синей дымке, лежала родина, которую он не помнил, но любил всем существом. Он поклялся вернуть её.',
     'Банан спустился к границе старого леса. Там, среди родных деревьев, торчали башни орков, реяли красные флаги, стелился дым. Он сжал оружие и сделал первый шаг домой. За Долину. За тех, кого хранит сердце. ВПЕРЁД!'
+  ], en:[
+    'High in the green heart of the jungle lived a village of orangutans and forest beasts. Cubs raced across vine bridges, warm fires glowed in tree-bough homes, and songs rang out beneath the banana moon. No one knew this would be the Valley’s last peaceful night.',
+    'They came at dawn — orcs in crude armor, with torches and malice in their eyes. Bridges blazed, watchtowers crashed down, ancient trees became living pyres. The home built over generations was crumbling in a single hour.',
+    'The beasts fled through smoke and ash, clutching the dearest to their chests. Their cries drowned in the roar of flame. When the fire died, of the bustling village only embers and a bitter wind over empty land remained.',
+    'But fate spared one spark. By a cold mountain river, two old forest guardians found a tiny orangutan wrapped in banana leaves. He did not cry — only gripped his rescuer’s finger tightly. In those eyes glimmered the hope of a whole people.',
+    'The years flowed like mountain streams. On a stone platform beneath the clouds the little one grew strong. The guardians taught him not only to strike and leap, but to rise after every fall. “Strength is in the heart, Banan,” they would say. And his heart was tempered.',
+    'And that day came at last. On the cliff’s edge stood no longer a cub, but a warrior — weapon in hand and fire in his chest. Behind him remained the mountains that had sheltered him. Ahead, in a blue haze, lay the homeland he did not remember, yet loved with all his being. He vowed to win it back.',
+    'Banan descended to the border of the old forest. There, among native trees, jutted orc towers, red banners waved, smoke crept low. He gripped his weapon and took the first step home. For the Valley. For those his heart still holds. ONWARD!'
   ]};
 // финальный победный ролик — играет на победе над Властелином, перед экраном «Долина спасена»
-const VICTORY={ endLabel:'Завершить ▶',
+const VICTORY={ endLabel:'cine_finish',
   panels:['assets/cutscenes/c_win1.webp','assets/cutscenes/c_win2.webp','assets/cutscenes/c_win3.webp','assets/cutscenes/c_win4.webp','assets/cutscenes/c_win5.webp','assets/cutscenes/c_win6.webp','assets/cutscenes/c_win7.webp','assets/cutscenes/c_win8.webp'],
   texts:['Последний удар — и Тёмный Властелин рассыпался прахом. Тишина опустилась на крепость. Банан стоял один среди поверженного зла, и впервые за долгие годы над Долиной занимался по-настоящему свободный рассвет.',
          'А внизу гремела победа. Многотысячный союз зверей смёл орочьи легионы — орки и тролли бежали, рассеялись, сгинули. Их империя страха пала навсегда.',
@@ -372,7 +476,15 @@ const VICTORY={ endLabel:'Завершить ▶',
          'Народ Долины поднял своего героя на руках. Тысячи голосов слились в единый клич, и лепестки кружились в небе. Маленький найдёныш из листьев стал тем, кто спас целый мир.',
          'Над возрождённой землёй взвилось знамя Долины — знамя свободы. Звери, что годами прятались в страхе, теперь смеялись и обнимались под ним. Дом вернулся.',
          'А вечером запылали огни большого пира. Столы ломились от бананов и плодов, звучали песни и смех. Панда, ленивец и обезьяна сидели во главе — уже не учитель и ученики, а семья.',
-         'Лёд растаял, топи отступили, джунгли вновь зазеленели. Банан смотрел на свой свободный народ и знал: родители видят его. И гордятся. Это его Долина. Дома — навсегда. КОНЕЦ.'] };
+         'Лёд растаял, топи отступили, джунгли вновь зазеленели. Банан смотрел на свой свободный народ и знал: родители видят его. И гордятся. Это его Долина. Дома — навсегда. КОНЕЦ.'],
+  en:['One last blow — and the Dark Lord crumbled to dust. Silence fell over the fortress. Banan stood alone amid the vanquished evil, and for the first time in long years a truly free dawn rose over the Valley.',
+      'And below, victory thundered. The many-thousand alliance of beasts swept away the orcish legions — orcs and trolls fled, scattered, perished. Their empire of fear had fallen forever.',
+      'And the warm light returned once more. The spirits of his parents descended to their son, shining with pride. “You did it, dear one. You won back our home. We are prouder of you than any words can hold.” Banan smiled through his tears.',
+      'Beside him stood those who had guided him all the way. “I knew it, little one. I knew from that day by the river,” said Master Bo. “And I never doubted. And barely slept,” added Snooze. Three hearts, one victory.',
+      'The people of the Valley raised their hero high. A thousand voices merged into a single cheer, and petals swirled in the sky. The little foundling from the leaves had become the one who saved a whole world.',
+      'Over the reborn land rose the banner of the Valley — the banner of freedom. The beasts who had hidden in fear for years now laughed and embraced beneath it. Home had returned.',
+      'And that evening the fires of a great feast blazed up. Tables groaned with bananas and fruit, songs and laughter rang out. Panda, sloth, and monkey sat at the head — no longer teacher and students, but family.',
+      'The ice melted, the mire receded, the jungle grew green again. Banan looked upon his free people and knew: his parents see him. And they are proud. This was his Valley. Home — forever. THE END.'] };
 // держим ссылки на прелоад-картинки, иначе браузер может выгрузить их до загрузки (панели мелькали пустыми)
 const _preloadKeep=[];
 [].concat(...Object.values(CINEMATICS).map(d=>d.panels), INTRO_STORY.panels,
@@ -380,7 +492,7 @@ const _preloadKeep=[];
   .forEach(src=>{ const im=new Image(); im.decoding='sync'; im.src=src; _preloadKeep.push(im); });
 let playedCine={}, cineQ=[], cineTexts=[], cineI=0, cineCb=null;
 let cineEndLabel='Начать ▶';
-function playCinematic(def,cb){ cineQ=def.panels; cineTexts=def.texts||[]; cineEndLabel=def.endLabel||'Начать ▶'; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
+function playCinematic(def,cb){ cineQ=def.panels; cineTexts=(LANG==='en'&&def.en)?def.en:(def.texts||[]); cineEndLabel=def.endLabel||'cine_battle'; cineI=0; cineCb=cb; show('cinematic'); renderCine(); }
 function renderCine(){ const img=document.getElementById('cineImg'); const src=cineQ[cineI];
   const kb=()=>{ img.style.animation='none'; void img.offsetWidth; img.style.animation='kenburns 7s ease-out forwards'; };
   img.style.opacity='0'; img.onload=()=>{ img.style.opacity='1'; kb(); };   // не крутим пустой кадр — ждём картинку
@@ -388,7 +500,7 @@ function renderCine(){ const img=document.getElementById('cineImg'); const src=c
   img.src=src; if(img.complete && img.naturalWidth){ img.style.opacity='1'; kb(); }   // уже в кэше
   document.getElementById('cineText').textContent=cineTexts[cineI]||'';
   const last=cineI>=cineQ.length-1;
-  const nx=document.getElementById('cineNext'); nx.textContent=last?cineEndLabel:'Дальше →'; nx.classList.toggle('cineStart',last);
+  const nx=document.getElementById('cineNext'); nx.textContent=last?t(cineEndLabel):t('cine_next'); nx.classList.toggle('cineStart',last);
   const pv=document.getElementById('cinePrev'); pv.disabled=(cineI===0);
   const dots=document.getElementById('cineDots'); if(dots)dots.textContent=(cineI+1)+' / '+cineQ.length; }
 function cineFinish(){ hide('cinematic'); const cb=cineCb; cineCb=null; if(cb)cb(); }
@@ -399,50 +511,50 @@ document.getElementById('cineNext').onclick=(e)=>{ e.stopPropagation(); if(cineI
 document.getElementById('cinePrev').onclick=(e)=>{ e.stopPropagation(); cineBack(); };
 document.getElementById('cineSkip').onclick=(e)=>{ e.stopPropagation(); cineFinish(); };   // пропустить всё — игра начинается
 /* ---- предуровневый трёп: птица + ленивец + обезьяна (по уровню) ---- */
-const SPK={ sloth:{name:'Дрём', img:'assets/portraits/sloth.webp', color:'#cdb482'},
-            panda:{name:'Мастер Бо', img:'assets/portraits/panda.webp', color:'#bfe3a8'},
-            hero:{name:'Банан', img:'assets/sprites/cl_idle.webp', color:'#ffc93c'} };
+const SPK={ sloth:{name:'spk_sloth', img:'assets/portraits/sloth.webp', color:'#cdb482'},
+            panda:{name:'spk_panda', img:'assets/portraits/panda.webp', color:'#bfe3a8'},
+            hero:{name:'spk_hero', img:'assets/sprites/cl_idle.webp', color:'#ffc93c'} };
 const BANTER={
-  0:[['panda','Помнишь, малыш, как я учил тебя падать и снова вставать? Сегодня ты встаёшь за всю Долину.'],['sloth','А я учил тебя спать. Тоже навык. Но, видимо, не сегодня…'],['hero','Спасибо, что верили в меня. Я не подведу.']],
-  1:[['sloth','Орки сожгли твою колыбель, Банан. И мой любимый гамак заодно. Гамак-то за что?'],['panda','Гнев — плохой попутчик. Дерись сердцем, а не злостью.'],['hero','Сердцем — так сердцем. Но и кулаком немножко.']],
-  2:[['panda','Орки рубят наш лес на топливо для своих кузниц. Каждое дерево помнило чей-то дом.'],['sloth','И мой обед под ним. Вот это уже личное.'],['hero','Отомстим за каждое. Идём дальше.']],
-  3:[['panda','Впереди Паук-Страж — последняя тень над джунглями. Восемь ног, восемь шансов оступиться. Жди момент и бей.'],['sloth','Спит наверняка меньше меня. Уже проигрывает.'],['hero','Стой за мной. Я порву эту паутину.']],
-  4:[['panda','В детстве ты боялся тёмной воды. Помнишь? А теперь идёшь прямо сквозь неё.'],['sloth','Я до сих пор боюсь. Поэтому держусь сзади. Стратегически.'],['hero','Прикрою. Идите след в след.']],
-  5:[['sloth','Тролли впереди. Большие, как моё нежелание шевелиться.'],['panda','Сила без разума — гора, что рушится сама. Будь водой, обойди удар.'],['hero','Буду водой. С банановым вкусом.']],
-  6:[['panda','Топь забирает силы у того, кто спешит. Дыши ровно, ступай твёрдо.'],['sloth','Я и так не спешу. Считай, прирождённый мастер болот.'],['hero','Тогда веди, мастер. Шаг за шагом.']],
-  7:[['panda','Вожак троллей силён, но медлителен. Твоя ловкость — вот твой настоящий меч.'],['sloth','Если что — я громко поверю в тебя отсюда. Очень громко.'],['hero','И этого хватит. За Долину!']],
-  8:[['panda','Помнишь, как ты потерялся в пещере ещё детёнышем? Мы искали тебя три дня.'],['sloth','Я нашёл первым. Потому что прилёг отдохнуть аккурат рядом с тобой.'],['hero','И до сих пор не вернул банан за спасение!']],
-  9:[['sloth','Своды трещат. Прямо как мои колени по утрам.'],['panda','Страх — это тень. Посвети факелом воли — и тень отступит.'],['hero','Воли хватит. Бегом под обвалом.']],
-  10:[['panda','Орки роют здесь не золото — твой страх. Не оставляй им добычи.'],['sloth','А я бы отдал. Страх тяжёлый, без него и спится крепче.'],['hero','Страх — вам. Себе оставлю победу.']],
-  11:[['panda','Кристальный голем твёрд, но и алмаз треснет по слабине. Найди её.'],['sloth','Бей туда, где блестит меньше. Это я и без медитаций знаю.'],['hero','Найду трещину. Разнесу на осколки.']],
-  12:[['sloth','Лёд! Холод — моё топливо для спячки. Разбудите весной, ладно?'],['panda','Холод закаляет. Кто дрожит, но идёт — тот сильнее любого тепла.'],['hero','Идём и дрожим. Строго по-геройски.']],
-  13:[['panda','Малышом ты лепил орков из снега и героически их побеждал. Сегодня — без шуток.'],['sloth','А я был снеговиком-судьёй. Самая активная роль в моей жизни.'],['hero','Тогда судите честно. Я снова выигрываю.']],
-  14:[['sloth','Орки в тёплых шубах. Везёт же гадам.'],['panda','Не завидуй врагу — зависть холодит сердце сильнее любого льда.'],['hero','Согрею сердце в бою. Вперёд.']],
-  15:[['panda','Ледяной Титан огромен. Но и ледник тает от упорства одной капли.'],['sloth','Будь каплей, Банан. А я буду… лужей поддержки.'],['hero','Капля за каплей — и Титан падёт.']],
-  16:[['panda','Небесные руины. Выше облаков — ближе к мечте. И к опасности.'],['sloth','Высоко. Падать долго. Если что — успею вздремнуть на лету.'],['hero','Не упадём. Держитесь троп.']],
-  17:[['sloth','Помнишь, ты мечтал летать? Прыгал с ветки с листом в лапах.'],['panda','И падал. Но всякий раз вставал. Вот это и есть полёт, ученик.'],['hero','Значит, я летаю всю жизнь. Просто пониже.']],
-  18:[['panda','Логово Властелина близко. Помни, зачем ты здесь — не ради мести, ради дома.'],['sloth','И ради бананов. Дом без бананов — просто стены.'],['hero','Ради дома. И бананов. Ещё один рывок.']],
-  19:[['panda','Вот он — Властелин Тени, тот, кто отнял твою колыбель. Покажи всё, чему научился.'],['sloth','В этот раз я не усну. Честно. Ну… почти.'],['hero','За маму, за Долину, за вас двоих. ВЛАСТЕЛИН — ПАДЁТ!']]
+  0:[['panda','Помнишь, малыш, как я учил тебя падать и снова вставать? Сегодня ты встаёшь за всю Долину.','Remember, little one, how I taught you to fall and rise again? Today you rise for the whole Valley.'],['sloth','А я учил тебя спать. Тоже навык. Но, видимо, не сегодня…','And I taught you to sleep. Also a skill. But not today, it seems…'],['hero','Спасибо, что верили в меня. Я не подведу.','Thank you for believing in me. I won’t let you down.']],
+  1:[['sloth','Орки сожгли твою колыбель, Банан. И мой любимый гамак заодно. Гамак-то за что?','The orcs burned your cradle, Banan. And my favorite hammock too. What did the hammock do?'],['panda','Гнев — плохой попутчик. Дерись сердцем, а не злостью.','Anger is a poor companion. Fight with your heart, not your rage.'],['hero','Сердцем — так сердцем. Но и кулаком немножко.','Heart it is. But a little fist too.']],
+  2:[['panda','Орки рубят наш лес на топливо для своих кузниц. Каждое дерево помнило чей-то дом.','The orcs fell our forest for their forges. Every tree remembered someone’s home.'],['sloth','И мой обед под ним. Вот это уже личное.','And my lunch under it. Now it’s personal.'],['hero','Отомстим за каждое. Идём дальше.','We’ll avenge every one. Onward.']],
+  3:[['panda','Впереди Паук-Страж — последняя тень над джунглями. Восемь ног, восемь шансов оступиться. Жди момент и бей.','Ahead waits the Guardian Spider, the last shadow over the jungle. Eight legs, eight chances to stumble. Wait, then strike.'],['sloth','Спит наверняка меньше меня. Уже проигрывает.','Surely sleeps less than me. Already losing.'],['hero','Стой за мной. Я порву эту паутину.','Stay behind me. I’ll tear that web apart.']],
+  4:[['panda','В детстве ты боялся тёмной воды. Помнишь? А теперь идёшь прямо сквозь неё.','As a child you feared dark water. Remember? Now you walk right through it.'],['sloth','Я до сих пор боюсь. Поэтому держусь сзади. Стратегически.','I still fear it. That’s why I stay behind. Strategically.'],['hero','Прикрою. Идите след в след.','I’ll cover you. Step where I step.']],
+  5:[['sloth','Тролли впереди. Большие, как моё нежелание шевелиться.','Trolls ahead. As big as my reluctance to move.'],['panda','Сила без разума — гора, что рушится сама. Будь водой, обойди удар.','Strength without wisdom is a mountain that crumbles itself. Be water, flow around the blow.'],['hero','Буду водой. С банановым вкусом.','I’ll be water. Banana-flavored.']],
+  6:[['panda','Топь забирает силы у того, кто спешит. Дыши ровно, ступай твёрдо.','The mire drains those who rush. Breathe steady, step firm.'],['sloth','Я и так не спешу. Считай, прирождённый мастер болот.','I never rush. Call me a born swamp master.'],['hero','Тогда веди, мастер. Шаг за шагом.','Then lead the way, master. Step by step.']],
+  7:[['panda','Вожак троллей силён, но медлителен. Твоя ловкость — вот твой настоящий меч.','The Troll Chieftain is strong but slow. Your agility is your true blade.'],['sloth','Если что — я громко поверю в тебя отсюда. Очень громко.','If needed, I’ll believe in you loudly from back here. Very loudly.'],['hero','И этого хватит. За Долину!','That’ll be enough. For the Valley!']],
+  8:[['panda','Помнишь, как ты потерялся в пещере ещё детёнышем? Мы искали тебя три дня.','Remember getting lost in a cave as a cub? We searched three days.'],['sloth','Я нашёл первым. Потому что прилёг отдохнуть аккурат рядом с тобой.','I found you first. Because I lay down to rest right next to you.'],['hero','И до сих пор не вернул банан за спасение!','And you still owe me a banana for the rescue!']],
+  9:[['sloth','Своды трещат. Прямо как мои колени по утрам.','The ceilings creak. Just like my knees in the morning.'],['panda','Страх — это тень. Посвети факелом воли — и тень отступит.','Fear is a shadow. Shine the torch of will, and it retreats.'],['hero','Воли хватит. Бегом под обвалом.','Will enough. Run beneath the cave-in.']],
+  10:[['panda','Орки роют здесь не золото — твой страх. Не оставляй им добычи.','The orcs mine no gold here — they mine your fear. Leave them no loot.'],['sloth','А я бы отдал. Страх тяжёлый, без него и спится крепче.','I’d hand it over. Fear is heavy; you sleep better without it.'],['hero','Страх — вам. Себе оставлю победу.','Fear is yours. I’ll keep the victory.']],
+  11:[['panda','Кристальный голем твёрд, но и алмаз треснет по слабине. Найди её.','The Crystal Golem is hard, but even diamond cracks at a flaw. Find it.'],['sloth','Бей туда, где блестит меньше. Это я и без медитаций знаю.','Strike where it shines less. I know that without meditating.'],['hero','Найду трещину. Разнесу на осколки.','I’ll find the crack. Shatter it to pieces.']],
+  12:[['sloth','Лёд! Холод — моё топливо для спячки. Разбудите весной, ладно?','Ice! Cold is my hibernation fuel. Wake me in spring, okay?'],['panda','Холод закаляет. Кто дрожит, но идёт — тот сильнее любого тепла.','Cold tempers. He who shivers yet walks is stronger than any warmth.'],['hero','Идём и дрожим. Строго по-геройски.','We walk and shiver. Strictly heroically.']],
+  13:[['panda','Малышом ты лепил орков из снега и героически их побеждал. Сегодня — без шуток.','As a cub you sculpted orcs from snow and heroically beat them. Today — for real.'],['sloth','А я был снеговиком-судьёй. Самая активная роль в моей жизни.','I was the snowman referee. The most active role of my life.'],['hero','Тогда судите честно. Я снова выигрываю.','Then judge fairly. I win again.']],
+  14:[['sloth','Орки в тёплых шубах. Везёт же гадам.','Orcs in warm furs. Lucky brutes.'],['panda','Не завидуй врагу — зависть холодит сердце сильнее любого льда.','Don’t envy your foe — envy chills the heart colder than any ice.'],['hero','Согрею сердце в бою. Вперёд.','I’ll warm my heart in battle. Onward.']],
+  15:[['panda','Ледяной Титан огромен. Но и ледник тает от упорства одной капли.','The Ice Titan is immense. But even a glacier melts to one stubborn drop.'],['sloth','Будь каплей, Банан. А я буду… лужей поддержки.','Be the drop, Banan. I’ll be… the puddle of support.'],['hero','Капля за каплей — и Титан падёт.','Drop by drop, the Titan will fall.']],
+  16:[['panda','Небесные руины. Выше облаков — ближе к мечте. И к опасности.','The Sky Ruins. Above the clouds, closer to the dream. And to danger.'],['sloth','Высоко. Падать долго. Если что — успею вздремнуть на лету.','High up. A long fall. If it comes, I’ll nap on the way down.'],['hero','Не упадём. Держитесь троп.','We won’t fall. Keep to the paths.']],
+  17:[['sloth','Помнишь, ты мечтал летать? Прыгал с ветки с листом в лапах.','Remember dreaming of flight? Jumping off a branch with a leaf in your paws.'],['panda','И падал. Но всякий раз вставал. Вот это и есть полёт, ученик.','And falling. But rising every time. That is flight, student.'],['hero','Значит, я летаю всю жизнь. Просто пониже.','So I’ve flown all my life. Just lower.']],
+  18:[['panda','Логово Властелина близко. Помни, зачем ты здесь — не ради мести, ради дома.','The Lord’s lair is near. Remember why you’re here — not for revenge, but for home.'],['sloth','И ради бананов. Дом без бананов — просто стены.','And for bananas. A home without bananas is just walls.'],['hero','Ради дома. И бананов. Ещё один рывок.','For home. And bananas. One more push.']],
+  19:[['panda','Вот он — Властелин Тени, тот, кто отнял твою колыбель. Покажи всё, чему научился.','There he is — the Shadow Lord, who took your cradle. Show all you’ve learned.'],['sloth','В этот раз я не усну. Честно. Ну… почти.','This time I won’t sleep. Honest. Well… almost.'],['hero','За маму, за Долину, за вас двоих. ВЛАСТЕЛИН — ПАДЁТ!','For mom, for the Valley, for you two. THE LORD — WILL FALL!']]
 };
 let banLines=[], banI=0, banCb=null, playedBanter={};
 function playBanter(idx,cb){ const lines=BANTER[idx]; if(!lines||playedBanter[idx]){ if(cb)cb(); return; }
   playedBanter[idx]=true; banLines=lines; banI=0; banCb=cb; show('banter'); renderBanter(); }
-function renderBanter(){ const [who,txt]=banLines[banI]; const s=SPK[who]||SPK.hero;
+function renderBanter(){ const ln=banLines[banI]; const who=ln[0], txt=(LANG==='en'&&ln[2]!=null)?ln[2]:ln[1]; const s=SPK[who]||SPK.hero;
   const im=document.getElementById('banImg'); im.src=s.img; im.style.animation='none'; void im.offsetWidth; im.style.animation='pop .25s ease';
-  const nm=document.getElementById('banName'); nm.textContent=s.name; nm.style.color=s.color;
-  document.getElementById('banText').textContent='«'+txt+'»';
-  document.getElementById('banNext').textContent=(banI>=banLines.length-1)?'В путь →':'Дальше →'; }
+  const nm=document.getElementById('banName'); nm.textContent=t(s.name); nm.style.color=s.color;
+  document.getElementById('banText').textContent=quote(txt);
+  document.getElementById('banNext').textContent=t(banI>=banLines.length-1?'ban_last':'ban_next'); }
 function advanceBanter(){ banI++; if(banI>=banLines.length){ endBanter(); return; } renderBanter(); }
 function endBanter(){ hide('banter'); const cb=banCb; banCb=null; if(cb)cb(); }
 document.getElementById('banter').onclick=e=>{ if(e.target&&e.target.id==='banSkip') endBanter(); else advanceBanter(); };
 
 /* ---- бой-диалог при появлении босса (по биому) ---- */
 const BOSSCUT={
-  jungle:[['Орк','Босс учуял тебя, банан. Паучиха голодна!'],['Герой','Тогда не будем заставлять её ждать.']],
-  swamp:[['Орк','ВОЖАК идёт! Топи дрогнут!'],['Герой','Пусть дрогнут. Я устою.']],
-  cave:[['Орк','Из темноты выходит наш силач. Беги!'],['Герой','Я принёс свет. И кулаки.']],
-  ice:[['Орк','Шаман заморозит твою кровь!'],['Герой','Согреюсь об его посох.']],
-  sky:[['Орк','Сам ВЛАСТЕЛИН ТЕНИ встречает тебя. Это честь — и твой конец.'],['Герой','Честь приму. Конец оставь себе.']]
+  jungle:[['orc','Босс учуял тебя, банан. Паучиха голодна!','The boss caught your scent, banana. The spider is hungry!'],['hero','Тогда не будем заставлять её ждать.','Then let’s not keep her waiting.']],
+  swamp:[['orc','ВОЖАК идёт! Топи дрогнут!','The CHIEFTAIN comes! The mire will tremble!'],['hero','Пусть дрогнут. Я устою.','Let it tremble. I’ll stand.']],
+  cave:[['orc','Из темноты выходит наш силач. Беги!','Our brute steps from the dark. Run!'],['hero','Я принёс свет. И кулаки.','I brought light. And fists.']],
+  ice:[['orc','Наш титан заморозит твою кровь!','Our titan will freeze your blood!'],['hero','Согреюсь об его осколки.','I’ll warm up on his shards.']],
+  sky:[['orc','Сам ВЛАСТЕЛИН ТЕНИ встречает тебя. Это честь — и твой конец.','The SHADOW LORD himself greets you. An honor — and your end.'],['hero','Честь приму. Конец оставь себе.','I’ll take the honor. Keep the end for yourself.']]
 };
 
 /* ---- сохранение прогресса ---- */
@@ -464,11 +576,11 @@ function startLevelFlow(){   // сюжетный ролик блока (если
   else playBanter(currentLevel, startInstance); }
 
 let endAction='restart';
-function endScreenG(title,s,btn,action){ document.getElementById('endTitle').textContent=title;
-  document.getElementById('endScore').textContent='Очки: '+s; document.getElementById('endBtn').textContent=btn; endAction=action; show('endScreen'); }
-window.levelClear=n=>{ sfx('win'); saveProgress(n); endScreenG('Уровень '+n+' пройден!',score,'Дальше →','next'); };  // n = индекс следующего уровня (автосейв)
-window.showWin=()=>{ sfx('win'); clearSave(); playCinematic(VICTORY, ()=>endScreenG('Долина спасена! 🎉',score,'Сыграть снова','restart')); };
-window.showGameOver=()=>endScreenG('Игра окончена',score,'Ещё раз','restart');   // сейв сохраняем — «Продолжить» вернёт на последний уровень
+function endScreenG(title,s,btnKey,action){ document.getElementById('endTitle').textContent=title;
+  document.getElementById('endScore').textContent=t('end_score')+s; document.getElementById('endBtn').textContent=t(btnKey); endAction=action; show('endScreen'); }
+window.levelClear=n=>{ sfx('win'); saveProgress(n); endScreenG(t('lvl_cleared').replace('{n}',n),score,'end_next','next'); };  // n = индекс следующего уровня (автосейв)
+window.showWin=()=>{ sfx('win'); clearSave(); playCinematic(VICTORY, ()=>endScreenG(t('valley_saved'),score,'end_playagain','restart')); };
+window.showGameOver=()=>endScreenG(t('game_over'),score,'end_retry','restart');   // сейв сохраняем — «Продолжить» вернёт на последний уровень
 document.getElementById('endBtn').onclick=()=>{ hide('endScreen');
   if(activeScene&&activeScene.scene) activeScene.scene.pause();   // заморозить старый уровень: его update() не должен крутиться во время кат-сцены/перехода
   if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
@@ -479,19 +591,19 @@ function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^
 const BIOMES={
   jungle:{far:'bg_far',mid:'bg_mid',front:'bg_front',tile:'tile',
     obst:{spikes:'b_spikes',thorn:'b_thorn',stone:'b_stone',palisade:'b_palisade',gate:'b_gate'},
-    boss:'boss_spider',bossName:'ПАУК-СТРАЖ',tint:0xa6abb5,sky:0x0a1410},
+    boss:'boss_spider',bossName:'boss_spider',tint:0xa6abb5,sky:0x0a1410},
   swamp:{far:'swamp_far',mid:'swamp_mid',front:'swamp_front',tile:'tile_swamp',plat:'plat_swamp',
     obst:{spikes:'b_spikes_swamp',thorn:'b_thorn_swamp',stone:'b_stone_swamp',palisade:'b_palisade_swamp',gate:'b_gate_swamp'},
-    boss:'boss_king',bossName:'ТРОЛЛЬ-ВОЖАК',tint:0x9fb6a0,sky:0x0c1a0c},
+    boss:'boss_king',bossName:'boss_king',tint:0x9fb6a0,sky:0x0c1a0c},
   cave:{far:'cave_far',mid:'cave_mid',front:'cave_front',tile:'tile_cave',plat:'plat_cave',
     obst:{spikes:'b_spikes_cave',thorn:'b_thorn_cave',stone:'b_stone_cave',palisade:'b_palisade_cave',gate:'b_gate_cave'},
-    ref:'swamp',boss:'boss_crystal',bossName:'КРИСТАЛЬНЫЙ ГОЛЕМ',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
+    ref:'swamp',boss:'boss_crystal',bossName:'boss_crystal',tint:0xffffff,sky:0x120a24},   // свой арт; ref:swamp оставлен для отката врагов
   ice:{far:'ice_far',mid:'ice_mid',front:'ice_front',tile:'tile_ice',plat:'plat_ice',
     obst:{spikes:'b_spikes_ice',thorn:'b_thorn_ice',stone:'b_stone_ice',palisade:'b_palisade_ice',gate:'b_gate_ice'},
-    ref:'swamp',boss:'boss_ice',bossName:'ЛЕДЯНОЙ ТИТАН',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
+    ref:'swamp',boss:'boss_ice',bossName:'boss_ice',tint:0xffffff,sky:0xaad0f0},   // своё окружение; враги — золотые стражи (k_*_ice)
   sky:{far:'sky_far',mid:'sky_mid',front:'sky_front',tile:'tile_sky',
     obst:{spikes:'b_spikes_sky',thorn:'b_thorn_sky',stone:'b_stone_sky',palisade:'b_palisade_sky',gate:'b_gate_sky'},
-    boss:'boss_warlord',bossName:'ВЛАСТЕЛИН ТЕНИ',tint:0xffffff,sky:0xbcd6ff}
+    boss:'boss_warlord',bossName:'boss_warlord',tint:0xffffff,sky:0xbcd6ff}
 };
 function vis(name){ const b=BIOMES[name]; return b.far?b:BIOMES[b.ref]; }   // источник текстур
 const POOLS={
@@ -553,13 +665,13 @@ function genLevel(idx){
   const ncp=2+Math.floor(R()*2); const cps=[];
   for(let i=1;i<=ncp;i++){ let cx=Math.round(W*i/(ncp+1)), g=0; while(inGap(cx)&&g<10){cx+=70;g++;} cps.push(cx); }
   const CUT=({                                          // 5 блоков × 4 уровня; босс-интро добавляется отдельно (BOSSCUT)
-    0:[[Math.round(W*0.16),[["Орк","Стой, обезьяна! Эта тропа теперь наша."],["Герой","Долина животных — не ваша."],["Орк","Скоро будет наша вся. ВЗЯТЬ ЕГО!"]]],
-       [Math.round(W*0.6),[["Орк","Слышь, банан! За тобой должок — за вытоптанные грядки."],["Орк","Лови ребят на гостинец!"]]]],
-    1:[[Math.round(W*0.14),[["Орк-капрал","А, тот самый банан, что прорвался. Босс будет рад твоей шкуре."],["Герой","Передай боссу: я уже иду."],["Орк-капрал","Сначала пройди МОИХ парней!"]]],
-       [Math.round(W*0.62),[["Орк","Гррр! Окружай его, лучники — на холм!"]]]],
-    2:[[Math.round(W*0.14),[["Орк-страж","Дальше — логово Паучихи. Поворачивай, мохнатый."],["Герой","Я пришёл не поворачивать."],["Орк-страж","Тогда ты пришёл умереть. В АТАКУ!"]]],
-       [Math.round(W*0.6),[["Орк","Последний рубеж перед логовом! Щитоносцы — вперёд!"]]]],
-    4:[[Math.round(W*0.16),[["Орк","Добро пожаловать в наши топи, банан. Отсюда не выбираются."],["Герой","Я не уйду, пока вы не уйдёте."],["Орк","Тогда тут и сгниёшь! ТРОЛЛИ, к бою!"]]]]
+    0:[[Math.round(W*0.16),[["orc","Стой, обезьяна! Эта тропа теперь наша.","Halt, monkey! This path is ours now."],["hero","Долина животных — не ваша.","The Valley of Animals is not yours."],["orc","Скоро будет наша вся. ВЗЯТЬ ЕГО!","Soon it all will be. GET HIM!"]]],
+       [Math.round(W*0.6),[["orc","Слышь, банан! За тобой должок — за вытоптанные грядки.","Hey, banana! You owe us — for the trampled gardens."],["orc","Лови ребят на гостинец!","Catch the lads as a treat!"]]]],
+    1:[[Math.round(W*0.14),[["orc_cpl","А, тот самый банан, что прорвался. Босс будет рад твоей шкуре.","Ah, the banana that broke through. The boss will love your hide."],["hero","Передай боссу: я уже иду.","Tell the boss: I’m already coming."],["orc_cpl","Сначала пройди МОИХ парней!","First get past MY boys!"]]],
+       [Math.round(W*0.62),[["orc","Гррр! Окружай его, лучники — на холм!","Grrr! Surround him, archers — to the hill!"]]]],
+    2:[[Math.round(W*0.14),[["orc_gd","Дальше — логово Паучихи. Поворачивай, мохнатый.","Ahead is the Spider’s lair. Turn back, furball."],["hero","Я пришёл не поворачивать.","I didn’t come to turn back."],["orc_gd","Тогда ты пришёл умереть. В АТАКУ!","Then you came to die. ATTACK!"]]],
+       [Math.round(W*0.6),[["orc","Последний рубеж перед логовом! Щитоносцы — вперёд!","Last line before the lair! Shieldbearers — forward!"]]]],
+    4:[[Math.round(W*0.16),[["orc","Добро пожаловать в наши топи, банан. Отсюда не выбираются.","Welcome to our mire, banana. None leave this place."],["hero","Я не уйду, пока вы не уйдёте.","I won’t leave until you do."],["orc","Тогда тут и сгниёшь! ТРОЛЛИ, к бою!","Then rot here! TROLLS, to battle!"]]]]
   })[idx]||[];
   const cuts=CUT.map(c=>({x:c[0],lines:c[1],done:false}));
   if(m.boss){ cuts.push({x:Math.round(W*0.86),lines:BOSSCUT[m.biome]||BOSSCUT.jungle,done:false}); }   // бой-диалог + подкрепление перед боссом
@@ -598,12 +710,12 @@ function updateWeaponHUD(scene){ if(!scene.whl)return;
   scene.wIcons.club.setAlpha(currentWeapon==='club'?1:0.45); }
 function checkUpgrade(scene){ if(!upgraded && score>=400){ upgraded=true; WEAPONS.boomerang.dmg=3; WEAPONS.club.dmg=3; WEAPONS.boomerang.level=2; WEAPONS.club.level=2; sfx('perk');
     // иконки оружия не меняем (банан/меч), апгрейд только усиливает урон
-    const t=scene.add.text(400,92,'Оружие улучшено!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
-    scene.tweens.add({targets:t,alpha:0,y:72,delay:1000,duration:700,onComplete:()=>t.destroy()}); } }
+    const tt=scene.add.text(400,92,t('weapon_upg'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+    scene.tweens.add({targets:tt,alpha:0,y:72,delay:1000,duration:700,onComplete:()=>tt.destroy()}); } }
 function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=500; sfx('armor'); updateHud(scene);
   const p=scene.player; p.armor=true; p.invuln=true; p.setTint(0xffe27a);
-  const t=scene.add.text(400,68,'БРОНЯ 5 сек!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
-  scene.tweens.add({targets:t,alpha:0,delay:1500,duration:600,onComplete:()=>t.destroy()});
+  const tt=scene.add.text(400,68,t('armor_on'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+  scene.tweens.add({targets:tt,alpha:0,delay:1500,duration:600,onComplete:()=>tt.destroy()});
   scene.time.delayedCall(5000,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } }); }
 
 function create(){
@@ -659,8 +771,8 @@ function create(){
   (cfg.cps||[]).forEach(cx=>{ const c=this.checkpoints.create(cx,366,'flag'); c.setTint(0x6a7a8a); c.activated=false; });
   this.physics.add.overlap(this.player,this.checkpoints,(pl,c)=>{ if(c.activated)return; c.activated=true; c.clearTint(); this.cpX=c.x;
     sfx('checkpoint'); this.cameras.main.flash(120,120,200,150);
-    const t=this.add.text(c.x,300,'Чекпоинт!',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'18px',color:'#9effa0',stroke:'#06320a',strokeThickness:4}).setOrigin(0.5).setDepth(16);
-    this.tweens.add({targets:t,y:262,alpha:0,duration:1100,onComplete:()=>t.destroy()}); },null,this);
+    const tt=this.add.text(c.x,300,t('checkpoint'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'18px',color:'#9effa0',stroke:'#06320a',strokeThickness:4}).setOrigin(0.5).setDepth(16);
+    this.tweens.add({targets:tt,y:262,alpha:0,duration:1100,onComplete:()=>tt.destroy()}); },null,this);
 
   this.boss=null; this.enemies=this.physics.add.group();
   cfg.enemies.forEach(e=>spawnEnemy(this,e));
@@ -717,7 +829,7 @@ function create(){
   this.hpBar=this.add.rectangle(18,42,160,11,0x4caf50).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
   this.add.text(186,42,'HP',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
   updateHud(this);
-  this.add.text(16,424,(ADMIN?'[ ] — уровень (admin)   ':'')+'B — броня (500🍌)   I — инвентарь',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
+  this.add.text(16,424,(ADMIN?t('hud_admin'):'')+t('hud_hint'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
   this.add.rectangle(745,24,74,36,0x10241a,0.55).setScrollFactor(0).setDepth(18).setStrokeStyle(1,0x3f9d4a);
   this.whl=this.add.rectangle(728,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
   this.wIcons={boomerang:this.add.image(728,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
@@ -726,8 +838,8 @@ function create(){
 
   if(cfg.boss){ this.add.rectangle(400,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
     this.bossBar=this.add.rectangle(250,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
-    this.add.text(400,46,this.biomeCfg.bossName,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
-  const banner=this.add.text(400,150,cfg.boss?('Уровень '+(currentLevel+1)+'\n'+this.biomeCfg.bossName):('Уровень '+(currentLevel+1)),
+    this.add.text(400,46,t(this.biomeCfg.bossName),{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
+  const banner=this.add.text(400,150,cfg.boss?(t('level_word')+' '+(currentLevel+1)+'\n'+t(this.biomeCfg.bossName)):(t('level_word')+' '+(currentLevel+1)),
     {fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'32px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
@@ -892,7 +1004,7 @@ function hurtPlayer(scene,fromX,dmg){ const p=scene.player; if(gameOver||p.invul
   p.invuln=true; p.setAlpha(0.55); scene.time.delayedCall(700,()=>{ if(p.active&&!p.armor){p.invuln=false;p.setAlpha(1);} }); }
 function loseLife(scene){ lives-=1; heroHP=HERO_MAXHP; sfx('die');
   if(lives<=0){ gameOver=true; scene.physics.pause(); scene.cameras.main.flash(400,160,0,0);
-    scene.add.text(400,200,'Уровень заново',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
+    scene.add.text(400,200,t('level_restart'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
     scene.time.delayedCall(1200,()=>{ lives=START_LIVES; heroHP=HERO_MAXHP; gameOver=false; scene.scene.restart(); }); return; }
   const p=scene.player; p.setVelocity(0,0); p.setPosition(scene.cpX,180); p.clearTint();   // респаун на чекпоинте, полный HP
   scene.cameras.main.flash(160,255,80,80); updateHud(scene);
@@ -900,7 +1012,7 @@ function loseLife(scene){ lives-=1; heroHP=HERO_MAXHP; sfx('die');
 function pitDeath(scene){ const p=scene.player; if(gameOver)return;
   if(p.armor){ p.setVelocity(0,0); p.setPosition(scene.cpX,180); return; }
   if(p.invuln)return; loseLife(scene); }
-function updateHud(s){ s.hud.setText('Очки: '+score+'    Жизни: '+lives+'    Уровень: '+(currentLevel+1));
+function updateHud(s){ s.hud.setText(t('hud_score')+': '+score+'    '+t('hud_lives')+': '+lives+'    '+t('hud_level')+': '+(currentLevel+1));
   if(s.hpBar){ const f=Math.max(0,heroHP)/HERO_MAXHP; s.hpBar.width=160*f;
     s.hpBar.fillColor = f>0.5?0x4caf50:(f>0.25?0xffc93c:0xff4d4d); } }
 
@@ -928,10 +1040,8 @@ function setupTouch(){
 }
 setupTouch();
 
-/* ---- кнопка «Продолжить» на титуле (если есть сохранение) ---- */
-(function(){ const b=document.getElementById('continueBtn'); if(!b)return; const s=loadSave();
-  if(s&&typeof s.level==='number'&&s.level>0){ const n=Math.min(s.level,META.length-1)+1;
-    b.style.display=''; b.textContent='Продолжить (ур. '+n+')'; b.onclick=continueGame; } })();
+/* ---- кнопка «Продолжить» на титуле (если есть сохранение) + применить язык ---- */
+(function(){ const b=document.getElementById('continueBtn'); if(b) b.onclick=continueGame; applyStaticLang(); })();
 
 /* ---- полный экран (ПК) ---- */
 function fsActive(){ return document.fullscreenElement||document.webkitFullscreenElement; }

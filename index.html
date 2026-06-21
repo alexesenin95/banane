@@ -17,24 +17,25 @@
 <body>
 <div id="stage">
   <div id="game"></div>
+  <button id="langBtn" title="Language" aria-label="Language">EN</button>
   <button id="fsBtn" title="Полный экран" aria-label="Полный экран">⛶</button>
   <button id="muteBtn" title="Звук" aria-label="Звук">🔊</button>
   <div id="title" class="overlay show">
-    <p class="eyebrow">долина животных · вторжение</p>
-    <h1>Банан против орков</h1>
-    <p class="sub">Орки и креветки вторглись в Долину животных. Поднимайся, герой.</p>
+    <p class="eyebrow" data-i18n="title_eyebrow">долина животных · вторжение</p>
+    <h1 data-i18n="game_title">Банан против орков</h1>
+    <p class="sub" data-i18n="title_sub">Орки и креветки вторглись в Долину животных. Поднимайся, герой.</p>
     <div class="menuBtns">
       <button class="btn" id="continueBtn" style="display:none">Продолжить</button>
-      <button class="btn" id="startBtn">Начать заново</button>
+      <button class="btn" id="startBtn" data-i18n="btn_newgame">Начать заново</button>
       <button class="btn btn2" id="soundBtn">Звук: вкл</button>
-      <button class="btn btn2" id="exitBtn">Выход</button>
+      <button class="btn btn2" id="exitBtn" data-i18n="btn_exit">Выход</button>
     </div>
-    <div class="hintbar">Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь</div>
+    <div class="hintbar" data-i18n="title_hint">Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь</div>
   </div>
   <div id="byeScreen" class="overlay">
-    <h1>До новых встреч! 🍌</h1>
-    <p class="sub">Долина будет ждать своего героя.</p>
-    <button class="btn" id="byeBtn">Вернуться в меню</button>
+    <h1 data-i18n="bye_title">До новых встреч! 🍌</h1>
+    <p class="sub" data-i18n="bye_sub">Долина будет ждать своего героя.</p>
+    <button class="btn" id="byeBtn" data-i18n="bye_btn">Вернуться в меню</button>
   </div>
   <div id="intro" class="overlay">
     <p class="eyebrow">долина животных · вторжение</p>
@@ -45,12 +46,12 @@
     <div class="hintbar" id="introSkip" style="cursor:pointer">пропустить вступление</div>
   </div>
   <div id="cutscene" class="overlay">
-    <p class="eyebrow">встреча с врагом</p>
+    <p class="eyebrow" data-i18n="cut_eyebrow">встреча с врагом</p>
     <img id="cutPortrait" alt="">
     <p class="shaman" id="cutSpk"></p>
     <p class="shaman-line" id="cutText"></p>
     <button class="btn" id="cutNext">Дальше →</button>
-    <div class="hintbar">клик — продолжить</div>
+    <div class="hintbar" data-i18n="cut_hint">клик — продолжить</div>
   </div>
   <div id="dialogue" class="overlay">
     <p class="eyebrow">развилка · выбор оружия</p>
@@ -64,55 +65,55 @@
     </div>
   </div>
   <div id="inventory" class="overlay">
-    <p class="eyebrow">инвентарь</p>
-    <p class="shaman">Оружие</p>
+    <p class="eyebrow" data-i18n="inv_eyebrow">инвентарь</p>
+    <p class="shaman" data-i18n="inv_weapons">Оружие</p>
     <div id="invGrid"></div>
-    <p class="shaman" style="margin-top:4px">Образ героя</p>
+    <p class="shaman" style="margin-top:4px" data-i18n="inv_skin">Образ героя</p>
     <div id="skinGrid"></div>
-    <p class="shaman" style="margin-top:4px">Награды за бананы <span id="shopBal" class="shopBal"></span></p>
+    <p class="shaman" style="margin-top:4px"><span data-i18n="inv_rewards">Награды за бананы</span> <span id="shopBal" class="shopBal"></span></p>
     <div id="shopGrid"></div>
-    <button class="btn" id="invClose">Закрыть (I)</button>
-    <div class="hintbar">очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь</div>
+    <button class="btn" id="invClose" data-i18n="inv_close">Закрыть (I)</button>
+    <div class="hintbar" data-i18n="inv_hint">очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь</div>
   </div>
   <div id="cinematic" class="overlay">
     <img id="cineImg" alt="">
     <p id="cineText"></p>
     <div id="cineDots"></div>
-    <button class="btn btn2" id="cineSkip">Пропустить всё</button>
+    <button class="btn btn2" id="cineSkip" data-i18n="cine_skip">Пропустить всё</button>
     <div id="cineNav">
-      <button class="btn btn2" id="cinePrev">← Назад</button>
+      <button class="btn btn2" id="cinePrev" data-i18n="cine_prev">← Назад</button>
       <button class="btn" id="cineNext">Дальше →</button>
     </div>
   </div>
   <div id="tutorial" class="overlay">
-    <p class="eyebrow">как играть</p>
-    <h1 class="tutTitle">Управление</h1>
+    <p class="eyebrow" data-i18n="tut_eyebrow">как играть</p>
+    <h1 class="tutTitle" data-i18n="tut_title">Управление</h1>
     <div class="tutGrid">
-      <div class="tutRow"><span class="tutKey">← →</span><span>Бег влево / вправо</span></div>
-      <div class="tutRow"><span class="tutKey">Пробел / ↑</span><span>Прыжок</span></div>
-      <div class="tutRow"><span class="tutKey">X / клик</span><span>Атака оружием</span></div>
-      <div class="tutRow"><span class="tutKey">1 / 2</span><span>Сменить оружие: банан-бумеранг / меч</span></div>
-      <div class="tutRow"><span class="tutKey">I</span><span>Инвентарь и магазин наград</span></div>
-      <div class="tutRow"><span class="tutKey">B</span><span>Броня — неуязвимость 5 сек за очки</span></div>
+      <div class="tutRow"><span class="tutKey">← →</span><span data-i18n="tut_move">Бег влево / вправо</span></div>
+      <div class="tutRow"><span class="tutKey" data-i18n="tut_jump_k">Пробел / ↑</span><span data-i18n="tut_jump">Прыжок</span></div>
+      <div class="tutRow"><span class="tutKey" data-i18n="tut_atk_k">X / клик</span><span data-i18n="tut_atk">Атака оружием</span></div>
+      <div class="tutRow"><span class="tutKey">1 / 2</span><span data-i18n="tut_weap">Сменить оружие: банан-бумеранг / меч</span></div>
+      <div class="tutRow"><span class="tutKey">I</span><span data-i18n="tut_inv">Инвентарь и магазин наград</span></div>
+      <div class="tutRow"><span class="tutKey">B</span><span data-i18n="tut_armor">Броня — неуязвимость 5 сек за очки</span></div>
     </div>
-    <p class="tutTip">🍌 Собирай бананы и бей орков — за это начисляются очки. Трать их в <b>инвентаре (клавиша I, на телефоне — ☰)</b> на усиления-награды.</p>
-    <p class="tutTip tutWarn">🦘 Обязательно купи в наградах <b>СУПЕР-ПРЫЖОК</b>! Некоторые высокие стены и широкие пропасти можно преодолеть <b>только</b> с ним.</p>
-    <p class="tutTip tutMob">📱 На телефоне управление — кнопками прямо на экране.</p>
-    <button class="btn" id="tutStart">В БОЙ! ▶</button>
+    <p class="tutTip" data-i18n="tut_tip">🍌 Собирай бананы и бей орков — за это начисляются очки. Трать их в инвентаре (клавиша I, на телефоне — ☰) на усиления-награды.</p>
+    <p class="tutTip tutWarn" data-i18n="tut_warn">🦘 Обязательно купи в наградах СУПЕР-ПРЫЖОК! Некоторые высокие стены и широкие пропасти можно преодолеть только с ним.</p>
+    <p class="tutTip tutMob" data-i18n="tut_mob">📱 На телефоне управление — кнопками прямо на экране.</p>
+    <button class="btn" id="tutStart" data-i18n="tut_start">В БОЙ! ▶</button>
   </div>
   <div id="banter" class="overlay">
-    <p class="eyebrow">перед боем · друзья рядом</p>
+    <p class="eyebrow" data-i18n="ban_eyebrow">перед боем · друзья рядом</p>
     <img id="banImg" alt="">
     <p class="shaman" id="banName"></p>
     <p class="shaman-line" id="banText"></p>
     <button class="btn" id="banNext">Дальше →</button>
-    <div class="hintbar" id="banSkip" style="cursor:pointer">пропустить →</div>
+    <div class="hintbar" id="banSkip" style="cursor:pointer" data-i18n="ban_skip">пропустить →</div>
   </div>
   <div id="endScreen" class="overlay">
     <h1 id="endTitle"></h1><p id="endScore">Очки: 0</p><button class="btn" id="endBtn">Дальше</button>
   </div>
   <!-- экран загрузки: логотип при старте игры, путь по биомам между уровнями -->
-  <div id="loadscreen"><img id="loadImg" alt=""><div id="loadDots">Загрузка…</div></div>
+  <div id="loadscreen"><img id="loadImg" alt=""><div id="loadDots" data-i18n="loading">Загрузка…</div></div>
   <!-- сенсорное управление (показывается только на тач-устройствах во время игры) -->
   <div id="touch" aria-hidden="true">
     <div class="tc tc-move">
@@ -129,7 +130,7 @@
       <button class="tbtn tsm" id="btnInv" aria-label="Инвентарь">☰</button>
     </div>
   </div>
-  <div id="rotate"><div class="rot-i">📱</div><p>Поверни телефон<br>в альбомную ориентацию</p></div>
+  <div id="rotate"><div class="rot-i">📱</div><p data-i18n="rotate" data-i18n-html="1">Поверни телефон<br>в альбомную ориентацию</p></div>
 </div>
 <script src="js/game.js"></script>
 </body>
