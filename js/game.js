@@ -913,9 +913,14 @@ setupTouch();
     b.style.display=''; b.textContent='Продолжить (ур. '+n+')'; b.onclick=continueGame; } })();
 
 /* ---- полный экран (ПК) ---- */
-(function(){ const b=document.getElementById('fsBtn'); if(!b)return; const st=document.getElementById('stage');
-  const isFS=()=>document.fullscreenElement||document.webkitFullscreenElement;
-  b.onclick=()=>{ if(isFS()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); }
-    else { const req=st.requestFullscreen||st.webkitRequestFullscreen; if(req)req.call(st); } };
-  const upd=()=>{ b.textContent=isFS()?'🗗':'⛶'; };
-  document.addEventListener('fullscreenchange',upd); document.addEventListener('webkitfullscreenchange',upd); })();
+function fsActive(){ return document.fullscreenElement||document.webkitFullscreenElement; }
+function enterFS(){ const st=document.getElementById('stage'); const req=st.requestFullscreen||st.webkitRequestFullscreen; if(req){ try{ const p=req.call(st); if(p&&p.catch)p.catch(()=>{}); }catch(e){} } }
+function toggleFS(){ if(fsActive()){ const ex=document.exitFullscreen||document.webkitExitFullscreen; if(ex)try{ex.call(document);}catch(e){} } else enterFS(); }
+(function(){ const b=document.getElementById('fsBtn'); if(!b)return;
+  b.onclick=e=>{ e.stopPropagation(); toggleFS(); };
+  const upd=()=>{ b.textContent=fsActive()?'🗗':'⛶'; };
+  document.addEventListener('fullscreenchange',upd); document.addEventListener('webkitfullscreenchange',upd);
+  // мобильные: автоматически на весь экран при первом касании (где API доступен)
+  if(document.body.classList.contains('touch')){
+    const once=()=>{ enterFS(); window.removeEventListener('pointerdown',once); };
+    window.addEventListener('pointerdown',once); } })();
