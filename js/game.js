@@ -1,4 +1,4 @@
-/* Банановый поход — игровая логика (Phaser 3).
+/* Банан против орков — игровая логика (Phaser 3).
    Ассеты грузятся из /assets. Пока один файл — в Claude Code первым делом
    можно безопасно разнести по модулям (levels / entities / combat / ui / game). */
 const TEX = {"p_idle": "assets/sprites/p_idle.webp", "p_run1": "assets/sprites/p_run1.webp", "p_run2": "assets/sprites/p_run2.webp", "p_run3": "assets/sprites/p_run3.webp", "p_jump": "assets/sprites/p_jump.webp", "p_attack": "assets/sprites/p_attack.webp", "s1": "assets/sprites/s1.webp", "s2": "assets/sprites/s2.webp", "orc1": "assets/sprites/orc1.webp", "orc2": "assets/sprites/orc2.webp", "orc3": "assets/sprites/orc3.webp", "spider": "assets/sprites/spider.webp", "proj": "assets/sprites/proj.webp", "banana": "assets/sprites/banana.webp", "flag": "assets/sprites/flag.webp", "tile": "assets/sprites/tile.webp", "bg_far": "assets/bg/bg_far.webp", "bg_mid": "assets/bg/bg_mid.webp", "bg_front": "assets/bg/bg_front.webp", "k_thrower": "assets/sprites/k_thrower.webp", "k_archer": "assets/sprites/k_archer.webp", "k_shield": "assets/sprites/k_shield.webp", "k_berserk": "assets/sprites/k_berserk.webp", "e_knife": "assets/sprites/e_knife.webp", "e_arrow": "assets/sprites/e_arrow.webp", "b_spikes": "assets/sprites/b_spikes.webp", "b_thorn": "assets/sprites/b_thorn.webp", "b_stone": "assets/sprites/b_stone.webp", "b_palisade": "assets/sprites/b_palisade.webp", "b_gate": "assets/sprites/b_gate.webp", "wi_boom2": "assets/sprites/wi_boom2.webp", "wi_club2": "assets/sprites/wi_club2.webp", "wi_boom": "assets/sprites/wi_boom.webp", "wi_club": "assets/sprites/wi_club.webp"};
@@ -70,7 +70,8 @@ const ENEMY_ANIMS={};
 ['t_club','t_bone','t_boulder','boss_troll'].forEach(t=>{ ENEMY_ANIMS[t]=[t,t+'2']; });   // тролли — ходьба
 ['boss_spider','boss_king','boss_crystal','boss_ice','boss_warlord'].forEach(b=>{ ENEMY_ANIMS[b]=[b,b+'2']; });   // боссы блоков — ходьба + кадр атаки (b+'3')
 const MENTOR = {"Чичо":"assets/portraits/chicho.webp","Доня":"assets/portraits/donya.webp"};
-const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
+// портреты в диалогах — реальные игровые модели (орк / обезьяна-орангутан)
+const ORC="assets/sprites/orc1.webp", HERO="assets/sprites/cl_idle.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
 const PW=109, PHH=62;
 /* ---- персонажи (выбор героя) ---- */
@@ -121,6 +122,9 @@ const WEAPON_LIST=[
 let currentWeapon='boomerang', upgraded=false;
 let game=null, chosenWeapon=null, currentLevel=0;
 let score=0, lives=3, heroHP=HERO_MAXHP, gameOver=false, paused=false, pauseReason=null;
+// временные эффекты из магазина наград (сбрасываются в начале уровня)
+let scoreMul=1, dmgMul=1, heroSpeedMul=1, heroJumpMul=1, magnetUntil=0;
+function resetPerks(s){ scoreMul=1; dmgMul=1; heroSpeedMul=1; heroJumpMul=1; magnetUntil=0; if(s)s.freezeUntil=0; }
 const TOUCH={left:false,right:false,jump:false};   // состояние сенсорных кнопок (читается в update)
 const show=id=>document.getElementById(id).classList.add('show');
 const hide=id=>document.getElementById(id).classList.remove('show');
@@ -215,7 +219,44 @@ function buildSkinGrid(){
   });
 }
 function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id; applyHeroLook(activeScene); buildSkinGrid(); }
-function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); show('inventory'); }
+
+/* ---- магазин наград (тратим очки за бананы/убийства) ---- */
+function _timed(s,fn,ms){ s.time.delayedCall(ms,fn); }
+function grantInvuln(s,ms){ const p=s.player; if(!p)return; p.invuln=true; p.armor=true; p.setTint(0xffe27a);
+  _timed(s,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } },ms); }
+function perkBanner(s,txt){ const t=s.add.text(400,108,txt,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'18px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+  s.tweens.add({targets:t,y:88,alpha:0,duration:1100,onComplete:()=>t.destroy()}); }
+function bananaStorm(s){ const x0=s.cameras.main.scrollX-60, x1=s.cameras.main.scrollX+860;
+  s.enemies.children.iterate(e=>{ if(e&&e.active&&e.x>x0&&e.x<x1) damageEnemy(e,e.isBoss?8:99); });
+  s.cameras.main.flash(240,255,232,120); return true; }
+function freezeEnemies(s,ms){ s.freezeUntil=s.time.now+ms;
+  _timed(s,()=>{ if(s.enemies) s.enemies.children.iterate(e=>{ if(e&&e.active)e.clearTint(); }); },ms); return true; }
+const PERKS=[
+  {id:'heal',  icon:'💚', name:'Полное здоровье',          cost:150, fn:s=>{ heroHP=HERO_MAXHP; return true; }},
+  {id:'shield',icon:'🛡️', name:'Бессмертие 5 сек',          cost:300, fn:s=>{ grantInvuln(s,5000); return true; }},
+  {id:'life',  icon:'❤️', name:'+1 жизнь',                  cost:350, fn:s=>{ lives=Math.min(lives+1,9); return true; }},
+  {id:'rage',  icon:'⚔️', name:'Ярость ×2 урон · 12 сек',   cost:300, fn:s=>{ dmgMul=2; _timed(s,()=>dmgMul=1,12000); return true; }},
+  {id:'speed', icon:'👟', name:'Скорость +60% · 12 сек',    cost:200, fn:s=>{ heroSpeedMul=1.6; _timed(s,()=>heroSpeedMul=1,12000); return true; }},
+  {id:'jump',  icon:'🦘', name:'Супер-прыжок · 12 сек',     cost:200, fn:s=>{ heroJumpMul=1.35; _timed(s,()=>heroJumpMul=1,12000); return true; }},
+  {id:'magnet',icon:'🧲', name:'Магнит бананов · 15 сек',   cost:200, fn:s=>{ magnetUntil=s.time.now+15000; return true; }},
+  {id:'freeze',icon:'❄️', name:'Заморозка врагов · 6 сек',  cost:350, fn:s=>freezeEnemies(s,6000)},
+  {id:'storm', icon:'🍌', name:'Банановый шторм (урон всем)',cost:500, fn:bananaStorm},
+  {id:'x2',    icon:'✨', name:'Двойные очки · 20 сек',      cost:300, fn:s=>{ scoreMul=2; _timed(s,()=>scoreMul=1,20000); return true; }}
+];
+function buildShopGrid(){ const g=document.getElementById('shopGrid'); if(!g)return; g.innerHTML='';
+  const bal=document.getElementById('shopBal'); if(bal)bal.textContent='· у тебя '+score+' 🍌';
+  PERKS.forEach(pk=>{ const ok=score>=pk.cost;
+    const card=document.createElement('div'); card.className='invCard perkCard'+(ok?'':' locked');
+    const ic=document.createElement('div'); ic.className='perkIcon'; ic.textContent=pk.icon; card.appendChild(ic);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=pk.name; card.appendChild(nm);
+    const ct=document.createElement('div'); ct.className='cost'; ct.textContent=pk.cost+' 🍌'; card.appendChild(ct);
+    if(ok) card.onclick=()=>buyPerk(pk.id);
+    g.appendChild(card); }); }
+function buyPerk(id){ const pk=PERKS.find(p=>p.id===id); if(!pk||!activeScene||score<pk.cost)return;
+  const s=activeScene; closeInventory();   // закрываем магазин и запускаем эффект в бою
+  score-=pk.cost; if(pk.fn(s)===false){ score+=pk.cost; } else perkBanner(s,pk.icon+' '+pk.name);
+  updateHud(s); }
+function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); buildShopGrid(); show('inventory'); }
 function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); }
 document.getElementById('invClose').onclick=closeInventory;
 document.addEventListener('keydown',e=>{ if(e.code==='KeyI'){ if(pauseReason==='inv')closeInventory(); else openInventory(); } });
@@ -454,7 +495,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
   scene.time.delayedCall(5000,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } }); }
 
 function create(){
-  gameOver=false; paused=false; pauseReason=null; activeScene=this;
+  gameOver=false; paused=false; pauseReason=null; activeScene=this; resetPerks(this);
   this.bossBar=null; this.boss=null; this.flag=null;   // scene.restart переиспользует объект сцены — гасим ссылки прошлого уровня (иначе update зовёт методы на уничтоженных объектах)
   lives=Math.max(lives,START_LIVES); heroHP=HERO_MAXHP; bumpMaxLevel();   // на входе в уровень — жизни/HP + учёт прогресса для разблокировки образов
   if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
@@ -637,9 +678,10 @@ function update(){
              if(Phaser.Input.Keyboard.JustDown(this.plk)){ currentLevel=Math.max(currentLevel-1,0); gameOver=false; this.scene.restart(); return; } }
   for(const cut of this.cuts){ if(!cut.done && p.x>=cut.x){ cut.done=true; startCut(this,cut); return; } }
   const left=c.left.isDown||TOUCH.left, right=c.right.isDown||TOUCH.right;
-  if(left){p.setVelocityX(-210);p.setFlipX(true);} else if(right){p.setVelocityX(210);p.setFlipX(false);} else p.setVelocityX(0);
+  const spd=210*heroSpeedMul;
+  if(left){p.setVelocityX(-spd);p.setFlipX(true);} else if(right){p.setVelocityX(spd);p.setFlipX(false);} else p.setVelocityX(0);
   const onGround=p.body.blocked.down||p.body.touching.down;
-  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround) p.setVelocityY(this.jumpVel);
+  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround) p.setVelocityY(this.jumpVel*heroJumpMul);
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
   if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);applyHeroLook(this);}
@@ -649,11 +691,14 @@ function update(){
   const sx=this.cameras.main.scrollX;
   this.bgFar.tilePositionX=sx*0.1; this.bgMid.tilePositionX=sx*0.35; this.bgFront.tilePositionX=sx*0.6;
   if(p.y>560) pitDeath(this);
+  if(now<magnetUntil && this.bananas){ this.bananas.children.iterate(b=>{   // магнит: бананы рядом подбираются сами
+    if(b&&b.active && Phaser.Math.Distance.Between(b.x,b.y,p.x,p.y)<220) collectBanana(p,b); }); }
 
   this.enemies.children.iterate(e=>{
     if(!e||!e.active)return;
     if(e.y>720){ if(e.isBoss)this.boss=null; e.disableBody(true,true); return; }
     if(now<(e.fleeUntil||0)){ e.setFlipX(e.body.velocity.x<0); return; }   // отпрыгивает после стомпа — не перебиваем скорость ИИ
+    if(now<(this.freezeUntil||0)){ e.setVelocityX(0); e.setTint(0x9ad4ff); return; }   // заморозка из магазина наград
     const t=e.getData('type'),mn=e.getData('min'),mx=e.getData('max');
     const dx=p.x-e.x, dy=p.y-e.y, adx=Math.abs(dx);
     const DZ=16, above=dy<=-55;   // герой заметно выше — не догоняем по горизонтали (без дёрганья), а патрулируем
@@ -695,7 +740,7 @@ function update(){
 function doAttack(scene){
   if(gameOver||paused)return;
   const now=scene.time.now; if(now<scene.atkReady)return; scene.atkReady=now+360;
-  const p=scene.player,dir=p.flipX?-1:1, dmg=WEAPONS[currentWeapon].dmg;
+  const p=scene.player,dir=p.flipX?-1:1, dmg=WEAPONS[currentWeapon].dmg*dmgMul;
   if(currentWeapon==='boomerang'){ const pr=scene.projs.create(p.x+dir*22,p.y-6,'proj'); pr.body.setAllowGravity(false);
     pr.setVelocityX(dir*400); pr.setAngularVelocity(760); pr.setDepth(5); pr.born=now; }
   else { p.setTexture(HK().attack); p._st='attack'; scene.time.delayedCall(240,()=>{ if(p.active)p._st=null; });
@@ -705,12 +750,12 @@ function doAttack(scene){
     scene.enemies.children.iterate(e=>{ if(!e||!e.active)return; const ddx=(e.x-p.x)*dir; if(ddx>-10&&ddx<range&&Math.abs(e.y-p.y)<66) damageEnemy(e,dmg); });
     scene.solids.children.iterate(s=>{ if(!s||!s.active||!s.breakable)return; const ddx=(s.x-p.x)*dir; if(ddx>-10&&ddx<range&&Math.abs(s.y-p.y)<70){ s.hp-=dmg+1; if(s.hp<=0)s.destroy(); else {s.setTint(0xffaaaa);scene.time.delayedCall(80,()=>{if(s.active)s.clearTint();});} } }); }
 }
-function projHit(pr,e){ if(e.inv){ blockSpark(e); pr.destroy(); return; } damageEnemy(e,WEAPONS[currentWeapon].dmg); pr.destroy(); }
+function projHit(pr,e){ if(e.inv){ blockSpark(e); pr.destroy(); return; } damageEnemy(e,WEAPONS[currentWeapon].dmg*dmgMul); pr.destroy(); }
 function blockSpark(e){ const s=e.scene.add.text(e.x,e.y-30,'✦',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#bfe3ff'}).setOrigin(0.5).setDepth(7);
   e.scene.tweens.add({targets:s,alpha:0,y:e.y-52,duration:300,onComplete:()=>s.destroy()}); }
 function damageEnemy(e,dmg){ const scene=e.scene; if(e.inv){ blockSpark(e); return; }
   e.hp-=dmg; e.setTint(0xff6666); scene.time.delayedCall(110,()=>{ if(e.active&&!e.inv)e.clearTint(); });
-  if(e.hp<=0){ const t=e.getData('type'), pts=t==='shrimp'?50:(t==='boss'?700:(t==='berserk'?160:(t.indexOf('troll')===0?200:120))); score+=pts; updateHud(scene); checkUpgrade(scene);
+  if(e.hp<=0){ const t=e.getData('type'), pts=t==='shrimp'?50:(t==='boss'?700:(t==='berserk'?160:(t.indexOf('troll')===0?200:120))); score+=pts*scoreMul; updateHud(scene); checkUpgrade(scene);
     const boss=e.isBoss; e.disableBody(true,true);
     if(boss){ scene.boss=null; gameOver=true; scene.physics.pause();
       if(currentLevel<META.length-1) window.levelClear(currentLevel+1); else window.showWin(); } } }
@@ -718,7 +763,7 @@ function hitEnemy(player,e){ if(player.body.touching.down&&e.body.touching.up){ 
     if(e.active){ const now=e.scene.time.now, away=player.x<e.x?1:-1;   // выживший враг подпрыгивает (скидывает героя) и удирает в другую сторону
       e.setVelocityY(-460); e.setVelocityX(away*Math.max(150,(e.speed||90)*1.4)); e.setFlipX(away<0); e.fleeUntil=now+600; }
   } else hurtPlayer(player.scene,e.x); }
-function collectBanana(player,banana){ banana.disableBody(true,true); score+=10; updateHud(player.scene); checkUpgrade(player.scene); }
+function collectBanana(player,banana){ banana.disableBody(true,true); score+=10*scoreMul; updateHud(player.scene); checkUpgrade(player.scene); }
 function getLife(player,l){ l.disableBody(true,true); lives=Math.min(lives+1,9); updateHud(player.scene);
   const t=player.scene.add.text(l.x,l.y-10,'+1 ♥',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'18px',color:'#ff7a93',stroke:'#3a0a14',strokeThickness:4}).setOrigin(0.5).setDepth(15);
   player.scene.tweens.add({targets:t,y:l.y-46,alpha:0,duration:800,onComplete:()=>t.destroy()}); }
