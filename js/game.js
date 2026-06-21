@@ -49,7 +49,11 @@ Object.assign(TEX,{
   plat_cave:'assets/sprites/plat_cave.webp', plat_ice:'assets/sprites/plat_ice.webp', plat_swamp:'assets/sprites/plat_swamp.webp',
   cl_idle:'assets/sprites/cl_idle.webp', cl_run1:'assets/sprites/cl_run1.webp', cl_run2:'assets/sprites/cl_run2.webp', cl_jump:'assets/sprites/cl_jump.webp', cl_attack:'assets/sprites/cl_attack.webp',
   gd_idle:'assets/sprites/gd_idle.webp', gd_run1:'assets/sprites/gd_run1.webp', gd_run2:'assets/sprites/gd_run2.webp', gd_jump:'assets/sprites/gd_jump.webp', gd_attack:'assets/sprites/gd_attack.webp',
-  dk_idle:'assets/sprites/dk_idle.webp', dk_run1:'assets/sprites/dk_run1.webp', dk_run2:'assets/sprites/dk_run2.webp', dk_jump:'assets/sprites/dk_jump.webp', dk_attack:'assets/sprites/dk_attack.webp'
+  dk_idle:'assets/sprites/dk_idle.webp', dk_run1:'assets/sprites/dk_run1.webp', dk_run2:'assets/sprites/dk_run2.webp', dk_jump:'assets/sprites/dk_jump.webp', dk_attack:'assets/sprites/dk_attack.webp',
+  cl_nb_idle:'assets/sprites/cl_nb_idle.webp', cl_nb_run1:'assets/sprites/cl_nb_run1.webp', cl_nb_run2:'assets/sprites/cl_nb_run2.webp', cl_nb_jump:'assets/sprites/cl_nb_jump.webp', cl_nb_attack:'assets/sprites/cl_nb_attack.webp',
+  gd_nb_idle:'assets/sprites/gd_nb_idle.webp', gd_nb_run1:'assets/sprites/gd_nb_run1.webp', gd_nb_run2:'assets/sprites/gd_nb_run2.webp', gd_nb_jump:'assets/sprites/gd_nb_jump.webp', gd_nb_attack:'assets/sprites/gd_nb_attack.webp',
+  dk_nb_idle:'assets/sprites/dk_nb_idle.webp', dk_nb_run1:'assets/sprites/dk_nb_run1.webp', dk_nb_run2:'assets/sprites/dk_nb_run2.webp', dk_nb_jump:'assets/sprites/dk_nb_jump.webp', dk_nb_attack:'assets/sprites/dk_nb_attack.webp',
+  wi_sword:'assets/sprites/wi_sword.webp'
 });
 // враги со своей покадровой анимацией (2 кадра): базовая текстура -> кадры
 const ENEMY_ANIMS={};
@@ -61,16 +65,29 @@ const ORC="assets/portraits/orc.webp", HERO="assets/portraits/hero.webp";
 const WI={boom:"assets/sprites/wi_boom.webp",club:"assets/sprites/wi_club.webp",boom2:"assets/sprites/wi_boom2.webp",club2:"assets/sprites/wi_club2.webp"};
 const PW=109, PHH=62;
 /* ---- персонажи (выбор героя) ---- */
+// у скинов два набора кадров: sword (с мечом — ближнее оружие) и banana (без оружия — метательное)
 const HEROES={
-  mono:{name:'Обезьянка Бана', desc:'Прежний герой — компактный и быстрый.',
-        idle:'p_idle', run:['p_run1','p_run2','p_run3'], jump:'p_jump', attack:'p_attack', files:null},
-  classic:{name:'Орангутан', desc:'Классический образ.', idle:'cl_idle', run:['cl_run1','cl_run2'], jump:'cl_jump', attack:'cl_attack', files:null},
-  gold:{name:'Золотой чемпион', desc:'Золотые доспехи.', idle:'gd_idle', run:['gd_run1','gd_run2'], jump:'gd_jump', attack:'gd_attack', files:null},
-  dark:{name:'Чёрный рыцарь', desc:'Вороненые латы.', idle:'dk_idle', run:['dk_run1','dk_run2'], jump:'dk_jump', attack:'dk_attack', files:null}
+  mono:{name:'Обезьянка Бана', idle:'p_idle', run:['p_run1','p_run2','p_run3'], jump:'p_jump', attack:'p_attack', files:null},
+  classic:{name:'Орангутан',
+    sword:{idle:'cl_idle',run:['cl_run1','cl_run2'],jump:'cl_jump',attack:'cl_attack'},
+    banana:{idle:'cl_nb_idle',run:['cl_nb_run1','cl_nb_run2'],jump:'cl_nb_jump',attack:'cl_nb_attack'}},
+  gold:{name:'Золотой чемпион',
+    sword:{idle:'gd_idle',run:['gd_run1','gd_run2'],jump:'gd_jump',attack:'gd_attack'},
+    banana:{idle:'gd_nb_idle',run:['gd_nb_run1','gd_nb_run2'],jump:'gd_nb_jump',attack:'gd_nb_attack'}},
+  dark:{name:'Чёрный рыцарь',
+    sword:{idle:'dk_idle',run:['dk_run1','dk_run2'],jump:'dk_jump',attack:'dk_attack'},
+    banana:{idle:'dk_nb_idle',run:['dk_nb_run1','dk_nb_run2'],jump:'dk_nb_jump',attack:'dk_nb_attack'}}
 };
 const SKINS=[ {id:'classic',name:'Классический',unlock:0}, {id:'gold',name:'Золотой',unlock:4}, {id:'dark',name:'Чёрный рыцарь',unlock:12} ];  // unlock = индекс уровня, по достижении которого образ открывается
 let selectedHero='classic';
-const HK=()=>HEROES[selectedHero]||HEROES.classic;
+function HK(){ const h=HEROES[selectedHero]||HEROES.classic;
+  if(h.sword) return (currentWeapon==='boomerang')?h.banana:h.sword;   // банан (бумеранг) -> без меча; меч (дубина) -> с мечом
+  return h; }
+function heroAnimKey(){ return 'run_'+selectedHero+'_'+(currentWeapon==='boomerang'?'b':'s'); }
+function skinCardImg(id){ const h=HEROES[id]; return 'assets/sprites/'+(h.sword?h.sword.idle:h.idle)+'.webp'; }
+function applyHeroLook(scene){ if(!scene||!scene.player)return; const p=scene.player;   // обновить облик героя под текущий скин/оружие
+  const rk=heroAnimKey(); if(!scene.anims.exists(rk)) scene.anims.create({key:rk,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1});
+  p._st=null; p.anims.stop(); p.setTexture(HK().idle); fitHero(p); }
 const HERO_DH={ classic:62, gold:62, dark:62 };   // целевая экранная высота героя в px; моно — нативный размер
 let maxLevel=(()=>{ try{ return (+localStorage.getItem('banane_maxlvl'))||0; }catch(e){ return 0; } })();
 function bumpMaxLevel(){ if(typeof currentLevel==='number' && currentLevel>maxLevel){ maxLevel=currentLevel; try{localStorage.setItem('banane_maxlvl',String(maxLevel));}catch(e){} } }
@@ -81,8 +98,8 @@ const HERO_MAXHP=100, START_LIVES=3;          // у героя полоска HP
 const DMG={contact:22, proj:16, hazard:26};   // урон по герою от разных источников
 const WEAPONS={boomerang:{dmg:2,level:1},club:{dmg:2,level:1}};
 const WEAPON_LIST=[
- {id:'boomerang',name:'Банановый бумеранг',unlocked:true},
- {id:'club',name:'Боевая дубина',unlocked:true},
+ {id:'boomerang',name:'Банан',unlocked:true},
+ {id:'club',name:'Меч',unlocked:true},
  {id:'spear',name:'Бамбуковое копьё',unlocked:false},
  {id:'sling',name:'Праща',unlocked:false},
  {id:'coconut',name:'Кокос-бомбы',unlocked:false},
@@ -138,13 +155,13 @@ document.getElementById('chooseClub').onclick=()=>pick('club');
   if(e.key==='Enter'||e.key===' '){e.preventDefault();document.getElementById(id).click();}}));
 
 /* ---- inventory ---- */
-function weaponIconURI(id){ if(id==='boomerang')return upgraded?WI.boom2:WI.boom; if(id==='club')return upgraded?WI.club2:WI.club; return null; }
+function weaponIconURI(id){ if(id==='boomerang')return 'assets/sprites/banana.webp'; if(id==='club')return 'assets/sprites/wi_sword.webp'; return null; }
 function buildInvGrid(){
   const g=document.getElementById('invGrid'); g.innerHTML='';
   WEAPON_LIST.forEach(w=>{
     const card=document.createElement('div'); card.className='invCard'+(w.unlocked?'':' locked')+(w.id===currentWeapon?' sel':'');
     if(w.unlocked){ const im=document.createElement('img'); im.src=weaponIconURI(w.id); card.appendChild(im);
-      card.onclick=()=>{ currentWeapon=w.id; if(activeScene)updateWeaponHUD(activeScene); closeInventory(); };
+      card.onclick=()=>{ currentWeapon=w.id; if(activeScene){updateWeaponHUD(activeScene);applyHeroLook(activeScene);} closeInventory(); };
     } else { const lk=document.createElement('div'); lk.className='lk'; lk.textContent='🔒'; card.appendChild(lk); }
     const nm=document.createElement('div'); nm.className='nm'; nm.textContent=w.name; card.appendChild(nm);
     g.appendChild(card);
@@ -154,20 +171,14 @@ function buildSkinGrid(){
   const g=document.getElementById('skinGrid'); if(!g)return; g.innerHTML='';
   SKINS.forEach(sk=>{ const open=skinUnlocked(sk.id);
     const card=document.createElement('div'); card.className='invCard'+(open?'':' locked')+(sk.id===selectedHero?' sel':'');
-    if(open){ const im=document.createElement('img'); im.src='assets/sprites/'+HEROES[sk.id].idle+'.webp'; card.appendChild(im);
+    if(open){ const im=document.createElement('img'); im.src=skinCardImg(sk.id); card.appendChild(im);
       card.onclick=()=>selectSkin(sk.id); }
     else { const lk=document.createElement('div'); lk.className='lk'; lk.textContent='🔒'; card.appendChild(lk); }
     const nm=document.createElement('div'); nm.className='nm'; nm.textContent=open?sk.name:('Блок '+(Math.floor(sk.unlock/4)+1)); card.appendChild(nm);
     g.appendChild(card);
   });
 }
-function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id;
-  const sc=activeScene;
-  if(sc&&sc.player){ const key='run_'+id;
-    if(!sc.anims.exists(key)) sc.anims.create({key,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1});
-    const p=sc.player; p._st=null; p.anims.stop(); p.setTexture(HK().idle); fitHero(p); }
-  buildSkinGrid();
-}
+function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id; applyHeroLook(activeScene); buildSkinGrid(); }
 function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); show('inventory'); }
 function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); }
 document.getElementById('invClose').onclick=closeInventory;
@@ -390,16 +401,17 @@ function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
 // а масштаб обратно пропорционален высоте кадра → мировые размеры/положение тела стабильны.
 function fitHero(p){ const t=HERO_DH[selectedHero]; if(!t||!p.height) return;
   const fw=p.width, fh=p.height; p.setScale(t/fh);
-  if(p.body){ p.body.setSize(fw*0.30,fh*0.80); p.body.setOffset(fw*0.35,fh*0.20); } }
+  // тело — по высоте и по центру кадра (холст широкий из-за оружия, но хитбокс остаётся компактным)
+  if(p.body){ const bw=fh*0.34; p.body.setSize(bw,fh*0.80); p.body.setOffset((fw-bw)/2,fh*0.20); } }
 function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
-  if(s==='run')p.anims.play('run_'+selectedHero,true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);}
+  if(s==='run')p.anims.play(heroAnimKey(),true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);}
   fitHero(p); }
 function updateWeaponHUD(scene){ if(!scene.whl)return;
   scene.whl.x=currentWeapon==='boomerang'?728:762;
   scene.wIcons.boomerang.setAlpha(currentWeapon==='boomerang'?1:0.45);
   scene.wIcons.club.setAlpha(currentWeapon==='club'?1:0.45); }
 function checkUpgrade(scene){ if(!upgraded && score>=400){ upgraded=true; WEAPONS.boomerang.dmg=3; WEAPONS.club.dmg=3; WEAPONS.boomerang.level=2; WEAPONS.club.level=2;
-    if(scene.wIcons){ scene.wIcons.boomerang.setTexture('wi_boom2').setDisplaySize(26,26); scene.wIcons.club.setTexture('wi_club2').setDisplaySize(26,26); }
+    // иконки оружия не меняем (банан/меч), апгрейд только усиливает урон
     const t=scene.add.text(400,92,'Оружие улучшено!',{fontFamily:'Trebuchet MS',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
     scene.tweens.add({targets:t,alpha:0,y:72,delay:1000,duration:700,onComplete:()=>t.destroy()}); } }
 function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=500; updateHud(scene);
@@ -427,8 +439,8 @@ function create(){
   this.bgMid=this.add.tileSprite(400,225,800,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
   this.bgFront=this.add.tileSprite(400,225,800,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
   this.add.rectangle(400,225,800,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
-  if(!this.anims.exists('run_'+selectedHero)){
-    this.anims.create({key:'run_'+selectedHero,frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
+  if(!this.anims.exists(heroAnimKey())){
+    this.anims.create({key:heroAnimKey(),frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
   if(!this.anims.exists('swim')){
     this.anims.create({key:'swim',frames:[{key:'s1'},{key:'s2'}],frameRate:5,repeat:-1});
     this.anims.create({key:'orcwalk',frames:[{key:'orc1'},{key:'orc2'}],frameRate:6,repeat:-1}); }
@@ -522,8 +534,8 @@ function create(){
   this.add.text(16,424,(ADMIN?'[ ] — уровень (admin)   ':'')+'B — броня (500🍌)   I — инвентарь',{fontFamily:'Trebuchet MS',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
   this.add.rectangle(745,24,74,36,0x10241a,0.55).setScrollFactor(0).setDepth(18).setStrokeStyle(1,0x3f9d4a);
   this.whl=this.add.rectangle(728,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
-  this.wIcons={boomerang:this.add.image(728,24,upgraded?'wi_boom2':'wi_boom').setScrollFactor(0).setDepth(20).setDisplaySize(26,26),
-               club:this.add.image(762,24,upgraded?'wi_club2':'wi_club').setScrollFactor(0).setDepth(20).setDisplaySize(26,26)};
+  this.wIcons={boomerang:this.add.image(728,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
+               club:this.add.image(762,24,'wi_sword').setScrollFactor(0).setDepth(20).setDisplaySize(24,24)};
   updateWeaponHUD(this);
 
   if(cfg.boss){ this.add.rectangle(400,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
@@ -588,8 +600,8 @@ function update(){
   const onGround=p.body.blocked.down||p.body.touching.down;
   if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround) p.setVelocityY(this.jumpVel);
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
-  if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);}
-  if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);}
+  if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);applyHeroLook(this);}
+  if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.buyKey)) activateArmor(this);
   if(p._st!=='attack'){ if(!onGround)setSt(p,'jump'); else if(left||right)setSt(p,'run'); else setSt(p,'idle'); }
 
@@ -695,7 +707,7 @@ function setupTouch(){
   const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
     el.addEventListener('pointerdown',e=>{ e.preventDefault(); fn(); }); };
   tap('btnAtk',()=>{ if(activeScene) doAttack(activeScene); });
-  tap('btnWeap',()=>{ currentWeapon=currentWeapon==='boomerang'?'club':'boomerang'; if(activeScene)updateWeaponHUD(activeScene); });
+  tap('btnWeap',()=>{ currentWeapon=currentWeapon==='boomerang'?'club':'boomerang'; if(activeScene){updateWeaponHUD(activeScene);applyHeroLook(activeScene);} });
   tap('btnArmor',()=>{ if(activeScene) activateArmor(activeScene); });
   tap('btnInv',()=>{ if(pauseReason==='inv') closeInventory(); else openInventory(); });
   // сброс зажатий при сворачивании/потере фокуса — чтобы кнопки не «залипали»
