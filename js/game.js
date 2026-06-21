@@ -697,6 +697,15 @@ function preload(){ for(const k in TEX) this.load.image(k,TEX[k]);
 // Нормализация героя к постоянной экранной высоте (HERO_DH). Кадры орангутана разной высоты —
 // без этого и спрайт, и хитбокс «прыгают» каждый кадр. Тело пересчитывается пропорционально кадру,
 // а масштаб обратно пропорционален высоте кадра → мировые размеры/положение тела стабильны.
+// доля высоты текстуры платформы, на которой начинается «тело» (трава) — выше неё только декор-навес
+const _platSurf={};
+function platSurfaceFrac(key,img){ if(_platSurf[key]!=null)return _platSurf[key]; let frac=0;
+  try{ const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+    const ctx=c.getContext('2d'); ctx.drawImage(img,0,0); const d=ctx.getImageData(0,0,img.width,img.height).data;
+    const W=img.width,H=img.height, need=W*0.5;
+    for(let y=0;y<H;y++){ let w=0; for(let x=0;x<W;x++) if(d[(y*W+x)*4+3]>80)w++; if(w>=need){ frac=y/H; break; } }
+  }catch(e){}
+  _platSurf[key]=frac; return frac; }
 function fitHero(p){ const t=HERO_DH[selectedHero]; if(!t||!p.height) return;
   const fw=p.width, fh=p.height; p.setScale(t/fh);
   // тело — по высоте и по центру кадра (холст широкий из-за оружия, но хитбокс остаётся компактным)
@@ -752,10 +761,13 @@ function create(){
   this.platforms=this.physics.add.staticGroup(); const TKEY=this.biomeCfg.tile;
   for(let x=20;x<=W-20;x+=40){ if(!cfg.gaps.some(g=>x>=g[0]&&x<=g[1])) this.platforms.create(x,430,TKEY); }
   const PLAT=bvz.plat, platSrc=PLAT?this.textures.get(PLAT).getSourceImage():null;
+  const tileH=this.textures.get(TKEY).getSourceImage().height;          // высота плитки коллизии
+  const sFrac=platSrc?platSurfaceFrac(PLAT,platSrc):0;                  // доля высоты декора до травы (выше — навес/кристаллы)
   cfg.platforms.forEach(p=>{ const decor=PLAT&&p[2]!==1;   // обычные платформы — художественный уступ; башенные ступени (p[2]==1) — мелкая плитка
     for(let i=-1;i<=1;i++){ const t=this.platforms.create(p[0]+i*40,p[1],TKEY); if(decor)t.setVisible(false); }
     if(decor){ const dw=136, dh=dw*platSrc.height/platSrc.width;
-      this.add.image(p[0],p[1]-26,PLAT).setOrigin(0.5,0).setDisplaySize(dw,dh).setDepth(-1); }
+      const decTop=(p[1]-tileH/2)-sFrac*dh;                            // совместить траву декора с верхом коллизии — герой стоит ровно на платформе
+      this.add.image(p[0],decTop,PLAT).setOrigin(0.5,0).setDisplaySize(dw,dh).setDepth(-1); }
   });
 
   this.player=this.physics.add.sprite(80,300,HK().idle); this.player._st=null; this.player.invuln=false; this.player.armor=false;
