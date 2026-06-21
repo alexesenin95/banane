@@ -751,8 +751,10 @@ function fireRock(scene,e){ const p=scene.player, dir=p.x<e.x?-1:1;
 function update(){
   if(gameOver||paused)return;
   const p=this.player,c=this.cursors, now=this.time.now;
-  if(ADMIN){ if(Phaser.Input.Keyboard.JustDown(this.nlk)){ currentLevel=Math.min(currentLevel+1,META.length-1); gameOver=false; this.scene.restart(); return; }
-             if(Phaser.Input.Keyboard.JustDown(this.plk)){ currentLevel=Math.max(currentLevel-1,0); gameOver=false; this.scene.restart(); return; } }
+  if(ADMIN){ const dir=Phaser.Input.Keyboard.JustDown(this.nlk)?1:(Phaser.Input.Keyboard.JustDown(this.plk)?-1:0);
+    if(dir){ currentLevel=Phaser.Math.Clamp(currentLevel+dir,0,META.length-1); gameOver=false;
+      delete playedCine[currentLevel]; delete playedBanter[currentLevel];   // показать ролик/болтовню заново при тесте
+      this.scene.pause(); startLevelFlow(); return; } }
   for(const cut of this.cuts){ if(!cut.done && p.x>=cut.x){ cut.done=true; startCut(this,cut); return; } }
   const left=c.left.isDown||TOUCH.left, right=c.right.isDown||TOUCH.right;
   const spd=210*heroSpeedMul;
