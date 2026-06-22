@@ -1,9 +1,15 @@
 /* Обёртка Yandex Games SDK v2 — безопасная деградация вне Яндекс.Игр.
    Игра полностью работает и без SDK (локально / на Vercel): все методы тогда no-op. */
 window.YA=(function(){
-  let sdk=null, player=null, cloud={}, saveTimer=null;
+  let sdk=null, player=null, cloud={}, saveTimer=null, loadedReq=false, loadedDone=false;
   const D={ inited:false, ready:false, hasAds:false, lang:null };
   const safe=fn=>{ try{ return fn(); }catch(e){ return undefined; } };
+
+  // сообщить платформе, что игра загружена и готова к игре (обязательный вызов).
+  // вызывать ровно один раз и именно когда контент готов — не раньше (иначе игрок видит чёрный экран).
+  function flushLoaded(){ if(loadedDone||!loadedReq||!sdk)return; loadedDone=true;
+    safe(()=>sdk.features&&sdk.features.LoadingAPI&&sdk.features.LoadingAPI.ready()); }
+  D.loaded=function(){ loadedReq=true; flushLoaded(); };
 
   D.init=function(onReady){
     if(D.inited){ onReady&&onReady(); return; } D.inited=true;
@@ -12,8 +18,9 @@ window.YA=(function(){
     const to=setTimeout(fin,4500);                               // не блокируем игру, если init завис
     Promise.resolve().then(()=>YaGames.init()).then(s=>{
       sdk=s; window.ysdk=s; D.ready=true; D.hasAds=!!(s.adv); clearTimeout(to);
-      safe(()=>s.features.LoadingAPI&&s.features.LoadingAPI.ready());   // сообщить платформе, что игра загружена (обязательно)
       D.lang=safe(()=>s.environment.i18n.lang)||null;
+      flushLoaded();                                             // если игра уже сообщила о готовности — отправить ready() сейчас
+      setTimeout(()=>{ loadedReq=true; flushLoaded(); }, 8000);  // страховка: вызвать ready() даже если игра почему-то не дёрнула loaded()
       safe(()=>s.getPlayer({scopes:false}).then(p=>{ player=p; loadCloud(); }).catch(()=>loadCloud()));
       fin();
     }).catch(()=>{ clearTimeout(to); fin(); });

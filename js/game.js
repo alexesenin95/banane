@@ -888,6 +888,7 @@ function create(){
     {fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'32px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
+  if(window.YA)YA.loaded();   // Яндекс: контент готов к игре — обязательный LoadingAPI.ready() (после первой постройки уровня)
   playMusic(cfg.biome);   // музыка биома (один трек на блок, кроссфейд на границе)
   if(window.YA)YA.gameplayStart();   // Яндекс: началась игровая сессия уровня
   // пересчёт ширины канваса под экран (фуллскрин/панель браузера/поворот могли изменить соотношение) — чтобы не было полей
@@ -1143,6 +1144,8 @@ window.setLang=setLang;
 // пауза/возобновление музыки на время рекламы
 window.onAdStart=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} };
 window.onAdEnd=()=>{ try{ if(!musMuted&&musInteracted&&musCurEl){ const p=musCurEl.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(e){} };
+// глушим звук, когда вкладка/игра не на переднем плане (требование Яндекса — не играть в фоне)
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) window.onAdStart(); else window.onAdEnd(); });
 // прилетели облачные сохранения Яндекса — слить в localStorage и обновить меню
 window.YA_onCloud=(d)=>{
   if(d){ try{
