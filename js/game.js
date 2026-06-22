@@ -102,7 +102,7 @@ const HERO_DH={ classic:62, gold:62, dark:62 };   // целевая экранн
 let maxLevel=(()=>{ try{ return (+localStorage.getItem('banane_maxlvl'))||0; }catch(e){ return 0; } })();
 function bumpMaxLevel(){ if(typeof currentLevel==='number' && currentLevel>maxLevel){ maxLevel=currentLevel; try{localStorage.setItem('banane_maxlvl',String(maxLevel));}catch(e){} if(window.YA)YA.cloudSet({maxlvl:maxLevel}); } }
 function skinUnlocked(id){ const s=SKINS.find(k=>k.id===id); return !s || maxLevel>=s.unlock; }
-const ADMIN=true;                 // dev-only level switching; set false for players
+const ADMIN=false;                // dev-only level switching; false для релиза/игроков
 const STOMP_DMG=6;   // прыжок сверху — ощутимый урон
 const HERO_MAXHP=100, START_LIVES=3;          // у героя полоска HP; жизни = число респаунов на чекпоинте
 const DMG={contact:22, proj:16, hazard:26};   // урон по герою от разных источников
