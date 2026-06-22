@@ -725,10 +725,8 @@ function fitHero(p){ const t=HERO_DH[selectedHero]; if(!t||!p.height) return;
 function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
   if(s==='run')p.anims.play(heroAnimKey(),true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);}
   fitHero(p); }
-function updateWeaponHUD(scene){ if(!scene.whl)return;
-  scene.whl.x=currentWeapon==='boomerang'?scene.scale.width-72:scene.scale.width-38;
-  scene.wIcons.boomerang.setAlpha(currentWeapon==='boomerang'?1:0.45);
-  scene.wIcons.club.setAlpha(currentWeapon==='club'?1:0.45); }
+function updateWeaponHUD(scene){ if(!scene.wIcon)return;
+  scene.wIcon.setTexture(currentWeapon==='boomerang'?'banana':'wi_sword'); }
 function checkUpgrade(scene){ if(!upgraded && score>=400){ upgraded=true; WEAPONS.boomerang.dmg=3; WEAPONS.club.dmg=3; WEAPONS.boomerang.level=2; WEAPONS.club.level=2; sfx('perk');
     // иконки оружия не меняем (банан/меч), апгрейд только усиливает урон
     const tt=scene.add.text(scene.scale.width/2,92,t('weapon_upg'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
@@ -855,12 +853,9 @@ function create(){
   this.add.text(186,42,'HP',{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0,0.5).setDepth(20);
   updateHud(this);
   this.add.text(16,424,(ADMIN?t('hud_admin'):'')+t('hud_hint'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
-  this.add.rectangle(745,24,74,36,0x10241a,0.55).setScrollFactor(0).setDepth(18).setStrokeStyle(1,0x3f9d4a);
-  const wx=this.scale.width-72;   // правый край (на ПК = 728); на мобиле канвас шире — иконки не нужны (есть кнопка ⇄)
-  this.whl=this.add.rectangle(wx,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
-  this.wIcons={boomerang:this.add.image(wx,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
-               club:this.add.image(wx+34,24,'wi_sword').setScrollFactor(0).setDepth(20).setDisplaySize(24,24)};
-  if(document.body.classList.contains('touch')){ this.whl.setVisible(false); this.wIcons.boomerang.setVisible(false); this.wIcons.club.setVisible(false); }
+  // индикатор текущего оружия — слева, под полоской HP (не перекрывает кнопки справа)
+  this.add.rectangle(16,70,36,36,0x10241a,0.55).setScrollFactor(0).setOrigin(0,0.5).setDepth(18).setStrokeStyle(2,0xffc93c);
+  this.wIcon=this.add.image(34,70,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(27,27);
   updateWeaponHUD(this);
 
   if(cfg.boss){ this.add.rectangle(GW/2,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
@@ -1097,10 +1092,10 @@ function toggleFS(){ if(fsActive()){ const ex=document.exitFullscreen||document.
   b.onclick=e=>{ e.stopPropagation(); toggleFS(); };
   const upd=()=>{ b.textContent=fsActive()?'🗗':'⛶'; };
   document.addEventListener('fullscreenchange',upd); document.addEventListener('webkitfullscreenchange',upd);
-  // мобильные: автоматически на весь экран при первом касании (где API доступен)
+  // мобильные: на весь экран при касании (повторяем, пока не войдём — заполняет область выреза камеры)
   if(document.body.classList.contains('touch')){
-    const once=()=>{ enterFS(); window.removeEventListener('pointerdown',once); };
-    window.addEventListener('pointerdown',once); } })();
+    const tryfs=()=>{ if(!fsActive()) enterFS(); };
+    window.addEventListener('pointerdown',tryfs); } })();
 
 /* ===================== Мост Yandex Games SDK ===================== */
 window.setLang=setLang;
