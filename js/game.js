@@ -756,7 +756,7 @@ function create(){
   this.bgFar=this.add.tileSprite(GW/2,225,GW,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
   this.bgMid=this.add.tileSprite(GW/2,225,GW,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
   this.bgFront=this.add.tileSprite(GW/2,225,GW,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
-  this.add.rectangle(GW/2,225,GW,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
+  this.skyRect=this.add.rectangle(GW/2,225,GW,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
   if(!this.anims.exists(heroAnimKey())){
     this.anims.create({key:heroAnimKey(),frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
   if(!this.anims.exists('swim')){
@@ -858,15 +858,28 @@ function create(){
   this.wIcon=this.add.image(34,70,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(27,27);
   updateWeaponHUD(this);
 
-  if(cfg.boss){ this.add.rectangle(GW/2,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
+  if(cfg.boss){ this.bossBarBg=this.add.rectangle(GW/2,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
     this.bossBar=this.add.rectangle(GW/2-150,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
-    this.add.text(GW/2,46,t(this.biomeCfg.bossName),{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
+    this.bossNameTxt=this.add.text(GW/2,46,t(this.biomeCfg.bossName),{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
   const banner=this.add.text(GW/2,150,cfg.boss?(t('level_word')+' '+(currentLevel+1)+'\n'+t(this.biomeCfg.bossName)):(t('level_word')+' '+(currentLevel+1)),
     {fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'32px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
   playMusic(cfg.biome);   // музыка биома (один трек на блок, кроссфейд на границе)
   if(window.YA)YA.gameplayStart();   // Яндекс: началась игровая сессия уровня
+  // пересчёт ширины канваса под экран (фуллскрин/панель браузера/поворот могли изменить соотношение) — чтобы не было полей
+  const relayout=()=>{ const st=document.getElementById('stage'); if(!st||!st.clientWidth||!st.clientHeight)return;
+    let gw=Math.round(450*(st.clientWidth/st.clientHeight)); if(!isFinite(gw)||gw<800)gw=800; if(gw>1280)gw=1280;
+    if(Math.abs(gw-this.scale.width)>2) this.scale.setGameSize(gw,450);
+    const W2=this.scale.width;
+    [this.bgFar,this.bgMid,this.bgFront].forEach(b=>{ if(b&&b.active){ b.x=W2/2; b.setSize(W2,450); } });
+    if(this.skyRect&&this.skyRect.active){ this.skyRect.x=W2/2; this.skyRect.setSize(W2,450); }
+    if(this.bossBarBg&&this.bossBarBg.active) this.bossBarBg.x=W2/2;
+    if(this.bossBar&&this.bossBar.active) this.bossBar.x=W2/2-150;
+    if(this.bossNameTxt&&this.bossNameTxt.active) this.bossNameTxt.x=W2/2; };
+  window.addEventListener('resize',relayout);
+  this.events.once('shutdown',()=>window.removeEventListener('resize',relayout));
+  this.time.delayedCall(60,relayout);
 }
 
 // текстура врага по цепочке биомов: свой биом → ref-биом → базовая (если своего арта нет)
