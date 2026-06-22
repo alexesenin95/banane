@@ -739,6 +739,7 @@ function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=5
 
 function create(){
   gameOver=false; paused=false; pauseReason=null; activeScene=this; resetPerks(this);
+  this.jumpReq=-1e9; this.jumpHeld=false; this.lastGround=-1e9;   // буфер прыжка + coyote-time
   this.bossBar=null; this.boss=null; this.flag=null;   // scene.restart переиспользует объект сцены — гасим ссылки прошлого уровня (иначе update зовёт методы на уничтоженных объектах)
   lives=Math.max(lives,START_LIVES); heroHP=HERO_MAXHP; bumpMaxLevel();   // на входе в уровень — жизни/HP + учёт прогресса для разблокировки образов
   if(this.physics&&this.physics.world&&this.physics.world.isPaused) this.physics.resume();  // после рестарта со снятого с паузы уровня
@@ -945,7 +946,12 @@ function update(){
   if(mx<-0.01)p.setFlipX(true); else if(mx>0.01)p.setFlipX(false);
   p.setVelocityX(210*heroSpeedMul*mx);
   const onGround=p.body.blocked.down||p.body.touching.down;
-  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround){ p.setVelocityY(this.jumpVel*heroJumpMul); sfx('jump'); TOUCH.jump=false; }
+  if(onGround) this.lastGround=now;
+  const jin=c.up.isDown||this.spaceKey.isDown||TOUCH.jump;                 // любой ввод прыжка
+  if(jin && !this.jumpHeld) this.jumpReq=now;                             // фронт нажатия → буфер прыжка
+  this.jumpHeld=jin;
+  if(now-(this.jumpReq||-1e9)<140 && (onGround||now-(this.lastGround||-1e9)<110)){   // буфер 140мс + coyote 110мс
+    p.setVelocityY(this.jumpVel*heroJumpMul); sfx('jump'); this.jumpReq=-1e9; }
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
   if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);applyHeroLook(this);}
@@ -1064,10 +1070,11 @@ function setupTouch(){
     const off=e=>{ e.preventDefault(); TOUCH[prop]=false; };
     el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off);
     el.addEventListener('pointercancel',off); el.addEventListener('pointerleave',off); };
-  // плавающий джойстик: нажми в левой зоне и тяни — герой идёт туда; толкни вверх — прыжок
+  hold('btnJump','jump');   // отдельная кнопка прыжка справа (рядом с ударом)
+  // плавающий джойстик — ТОЛЬКО движение (нажми в левой зоне и тяни); прыжок отдельной кнопкой
   const jz=document.getElementById('joyZone'), jb=document.getElementById('joyBase'), jk=document.getElementById('joyKnob');
-  let joyId=null, jcx=0, jcy=0, joyJumpLatch=false; const JR=46, JDZ=9, JUP=26;
-  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; TOUCH.moveX=0; TOUCH.jump=false; joyJumpLatch=false; };
+  let joyId=null, jcx=0, jcy=0; const JR=46, JDZ=9;
+  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; TOUCH.moveX=0; };
   if(jz){
     jz.addEventListener('pointerdown',e=>{ if(joyId!==null)return; e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
       jb.style.left=jcx+'px'; jb.style.top=jcy+'px'; jb.style.display='block'; jk.style.transform='translate(-50%,-50%)';
@@ -1076,9 +1083,7 @@ function setupTouch(){
       let dx=e.clientX-jcx, dy=e.clientY-jcy; const d=Math.hypot(dx,dy); if(d>JR){ dx=dx/d*JR; dy=dy/d*JR; }
       jk.style.transform='translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
       let m=(Math.abs(dx)-JDZ)/(JR-JDZ); m=Math.max(0,Math.min(1,m));   // 0 в мёртвой зоне → 1 на максимуме
-      TOUCH.moveX = m>0 ? (dx<0?-1:1)*(0.4+0.6*m) : 0;                  // мин. скорость 0.4 (ходьба) → 1.0 (бег)
-      const up=dy<-JUP;                                                 // толчок вверх — прыжок (фронт = один прыжок, повтор после возврата)
-      if(up&&!joyJumpLatch){ TOUCH.jump=true; joyJumpLatch=true; } else if(!up){ joyJumpLatch=false; } });
+      TOUCH.moveX = m>0 ? (dx<0?-1:1)*(0.4+0.6*m) : 0; });              // мин. скорость 0.4 (ходьба) → 1.0 (бег)
     const jend=e=>{ if(e.pointerId!==joyId)return; joyReset(); };
     jz.addEventListener('pointerup',jend); jz.addEventListener('pointercancel',jend); }
   const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
