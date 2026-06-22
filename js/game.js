@@ -137,6 +137,7 @@ const I18N={ ru:{
   btn_newgame:'Начать заново', btn_exit:'Выход',
   title_hint:'Стрелки — движение · Пробел — прыжок · X / клик — атака · 1 / 2 — смена оружия · ♥ — жизнь',
   bye_title:'До новых встреч! 🍌', bye_sub:'Долина будет ждать своего героя.', bye_btn:'Вернуться в меню',
+  pause_title:'Пауза', pause_resume:'Продолжить игру', pause_menu:'Выйти в меню', pause_exit:'Выйти из игры',
   cut_eyebrow:'встреча с врагом', cut_hint:'клик — продолжить', cut_next:'Дальше →', cut_last:'В бой →',
   inv_eyebrow:'инвентарь', inv_weapons:'Оружие', inv_skin:'Образ героя', inv_rewards:'Награды за бананы',
   inv_close:'Закрыть (I)', inv_hint:'очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь', reward_ad:'Смотреть рекламу',
@@ -165,6 +166,7 @@ const I18N={ ru:{
   btn_newgame:'New game', btn_exit:'Exit',
   title_hint:'Arrows — move · Space — jump · X / click — attack · 1 / 2 — switch weapon · ♥ — life',
   bye_title:'See you soon! 🍌', bye_sub:'The Valley will await its hero.', bye_btn:'Back to menu',
+  pause_title:'Paused', pause_resume:'Resume game', pause_menu:'Exit to menu', pause_exit:'Quit game',
   cut_eyebrow:'facing the enemy', cut_hint:'click — continue', cut_next:'Next →', cut_last:'To battle →',
   inv_eyebrow:'inventory', inv_weapons:'Weapons', inv_skin:'Hero skin', inv_rewards:'Banana rewards',
   inv_close:'Close (I)', inv_hint:'points from bananas and kills buy rewards · click a reward to buy · I — inventory', reward_ad:'Watch ad',
@@ -383,6 +385,26 @@ function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true;
 function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); if(window.YA)YA.gameplayStart(); }
 document.getElementById('invClose').onclick=closeInventory;
 document.addEventListener('keydown',e=>{ if(e.code==='KeyI'){ if(pauseReason==='inv')closeInventory(); else openInventory(); } });
+
+/* ---- пауза / выход во время игры ---- */
+function openPause(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='pause';
+  TOUCH.left=TOUCH.right=TOUCH.jump=false; TOUCH.moveX=0;
+  activeScene.physics.pause(); if(window.YA)YA.gameplayStop(); show('pause'); }
+function closePause(){ if(pauseReason!=='pause')return; hide('pause'); paused=false; pauseReason=null;
+  if(activeScene)activeScene.physics.resume(); if(window.YA)YA.gameplayStart(); }
+function pauseToMenu(){ hide('pause'); paused=false; pauseReason=null;
+  TOUCH.left=TOUCH.right=TOUCH.jump=false; TOUCH.moveX=0;
+  saveProgress(currentLevel);                                  // прогресс уровня сохранён — кнопка «Продолжить» вернёт сюда
+  if(activeScene&&activeScene.scene){ try{ activeScene.scene.pause(); }catch(e){} }
+  gameOver=false; if(window.YA)YA.gameplayStop(); playMusic('menu'); refreshContinueBtn(); show('title'); }
+function pauseExit(){ hide('pause'); paused=false; pauseReason=null;
+  saveProgress(currentLevel);
+  try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){}
+  if(window.YA)YA.gameplayStop(); show('byeScreen'); try{ window.close(); }catch(e){} }
+(function(){ const r=document.getElementById('pauseResume'); if(r)r.onclick=closePause;
+  const m=document.getElementById('pauseMenu'); if(m)m.onclick=pauseToMenu;
+  const x=document.getElementById('pauseExit'); if(x)x.onclick=pauseExit; })();
+document.addEventListener('keydown',e=>{ if(e.code==='Escape'){ if(pauseReason==='pause')closePause(); else if(!paused&&activeScene&&!gameOver)openPause(); } });
 
 /* ---- cutscene ---- */
 let cutLines=[], cutI=0, activeScene=null, currentCut=null;
@@ -698,7 +720,7 @@ function makeConfig(){ const st=document.getElementById('stage');
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
   const sc=game?(activeScene||game.scene.getScene('default')):null;
-  if(game&&sc&&sc.scene){ showLoad('level'); sc.scene.restart(); return; }
+  if(game&&sc&&sc.scene){ showLoad('level'); try{ sc.scene.resume(); }catch(e){} sc.scene.restart(); return; }   // сцена могла остаться на паузе после выхода в меню
   if(game){ try{game.destroy(true);}catch(e){} game=null; }
   showLoad('game'); game=new Phaser.Game(makeConfig()); }
 function startGame(weapon){ chosenWeapon=weapon; currentWeapon=weapon; score=0; lives=START_LIVES; heroHP=HERO_MAXHP; currentLevel=0; playedCine={}; playedBanter={};
@@ -1092,6 +1114,7 @@ function setupTouch(){
   tap('btnWeap',()=>{ currentWeapon=currentWeapon==='boomerang'?'club':'boomerang'; if(activeScene){updateWeaponHUD(activeScene);applyHeroLook(activeScene);} });
   tap('btnArmor',()=>{ if(activeScene) activateArmor(activeScene); });
   tap('btnInv',()=>{ if(pauseReason==='inv') closeInventory(); else openInventory(); });
+  tap('btnPause',()=>{ if(pauseReason==='pause') closePause(); else openPause(); });
   // сброс зажатий при сворачивании/потере фокуса — чтобы кнопки не «залипали»
   const clear=()=>{ TOUCH.jump=false; joyReset(); };
   window.addEventListener('blur',clear);

@@ -34,6 +34,14 @@
     <p class="sub" data-i18n="bye_sub">Долина будет ждать своего героя.</p>
     <button class="btn" id="byeBtn" data-i18n="bye_btn">Вернуться в меню</button>
   </div>
+  <div id="pause" class="overlay">
+    <h1 data-i18n="pause_title">Пауза</h1>
+    <div class="menuBtns">
+      <button class="btn" id="pauseResume" data-i18n="pause_resume">Продолжить игру</button>
+      <button class="btn btn2" id="pauseMenu" data-i18n="pause_menu">Выйти в меню</button>
+      <button class="btn btn2" id="pauseExit" data-i18n="pause_exit">Выйти из игры</button>
+    </div>
+  </div>
   <div id="intro" class="overlay">
     <p class="eyebrow">долина животных · вторжение</p>
     <img id="introPortrait" alt="">
@@ -120,6 +128,7 @@
       <button class="tbtn tbig tjump" id="btnJump" aria-label="Прыжок">▲</button>
     </div>
     <div class="tc tc-aux">
+      <button class="tbtn tsm" id="btnPause" aria-label="Пауза">⏸</button>
       <button class="tbtn tsm" id="btnWeap" aria-label="Сменить оружие">⇄</button>
       <button class="tbtn tsm" id="btnArmor" aria-label="Броня">🛡</button>
       <button class="tbtn tsm" id="btnInv" aria-label="Инвентарь">☰</button>
