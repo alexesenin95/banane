@@ -1086,7 +1086,7 @@ setupTouch();
 
 /* ---- полный экран (ПК) ---- */
 function fsActive(){ return document.fullscreenElement||document.webkitFullscreenElement; }
-function enterFS(){ const st=document.getElementById('stage'); const req=st.requestFullscreen||st.webkitRequestFullscreen; if(req){ try{ const p=req.call(st); if(p&&p.catch)p.catch(()=>{}); }catch(e){} } }
+function enterFS(){ const el=document.documentElement; const req=el.requestFullscreen||el.webkitRequestFullscreen; if(req){ try{ const p=req.call(el,{navigationUI:'hide'}); if(p&&p.catch)p.catch(()=>{ try{req.call(el);}catch(_){}}); }catch(e){ try{req.call(el);}catch(_){}} } }
 function toggleFS(){ if(fsActive()){ const ex=document.exitFullscreen||document.webkitExitFullscreen; if(ex)try{ex.call(document);}catch(e){} } else enterFS(); }
 (function(){ const b=document.getElementById('fsBtn'); if(!b)return;
   b.onclick=e=>{ e.stopPropagation(); toggleFS(); };
