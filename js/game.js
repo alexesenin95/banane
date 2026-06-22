@@ -100,7 +100,7 @@ function applyHeroLook(scene){ if(!scene||!scene.player)return; const p=scene.pl
   p._st=null; p.anims.stop(); p.setTexture(HK().idle); fitHero(p); }
 const HERO_DH={ classic:62, gold:62, dark:62 };   // целевая экранная высота героя в px; моно — нативный размер
 let maxLevel=(()=>{ try{ return (+localStorage.getItem('banane_maxlvl'))||0; }catch(e){ return 0; } })();
-function bumpMaxLevel(){ if(typeof currentLevel==='number' && currentLevel>maxLevel){ maxLevel=currentLevel; try{localStorage.setItem('banane_maxlvl',String(maxLevel));}catch(e){} } }
+function bumpMaxLevel(){ if(typeof currentLevel==='number' && currentLevel>maxLevel){ maxLevel=currentLevel; try{localStorage.setItem('banane_maxlvl',String(maxLevel));}catch(e){} if(window.YA)YA.cloudSet({maxlvl:maxLevel}); } }
 function skinUnlocked(id){ const s=SKINS.find(k=>k.id===id); return !s || maxLevel>=s.unlock; }
 const ADMIN=true;                 // dev-only level switching; set false for players
 const STOMP_DMG=6;   // прыжок сверху — ощутимый урон
@@ -139,7 +139,7 @@ const I18N={ ru:{
   bye_title:'До новых встреч! 🍌', bye_sub:'Долина будет ждать своего героя.', bye_btn:'Вернуться в меню',
   cut_eyebrow:'встреча с врагом', cut_hint:'клик — продолжить', cut_next:'Дальше →', cut_last:'В бой →',
   inv_eyebrow:'инвентарь', inv_weapons:'Оружие', inv_skin:'Образ героя', inv_rewards:'Награды за бананы',
-  inv_close:'Закрыть (I)', inv_hint:'очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь',
+  inv_close:'Закрыть (I)', inv_hint:'очки за бананы и убийства тратятся на награды · клик по награде — купить · I — инвентарь', reward_ad:'Смотреть рекламу',
   cine_skip:'Пропустить всё', cine_prev:'← Назад', cine_next:'Дальше →', cine_battle:'В бой ▶', cine_tutorial:'К обучению ▶', cine_finish:'Завершить ▶',
   tut_eyebrow:'как играть', tut_title:'Управление', tut_move:'Бег влево / вправо', tut_jump_k:'Пробел / ↑', tut_jump:'Прыжок',
   tut_atk_k:'X / клик', tut_atk:'Атака оружием', tut_weap:'Сменить оружие: банан-бумеранг / меч', tut_inv:'Инвентарь и магазин наград', tut_armor:'Броня — неуязвимость 5 сек за очки',
@@ -167,7 +167,7 @@ const I18N={ ru:{
   bye_title:'See you soon! 🍌', bye_sub:'The Valley will await its hero.', bye_btn:'Back to menu',
   cut_eyebrow:'facing the enemy', cut_hint:'click — continue', cut_next:'Next →', cut_last:'To battle →',
   inv_eyebrow:'inventory', inv_weapons:'Weapons', inv_skin:'Hero skin', inv_rewards:'Banana rewards',
-  inv_close:'Close (I)', inv_hint:'points from bananas and kills buy rewards · click a reward to buy · I — inventory',
+  inv_close:'Close (I)', inv_hint:'points from bananas and kills buy rewards · click a reward to buy · I — inventory', reward_ad:'Watch ad',
   cine_skip:'Skip all', cine_prev:'← Back', cine_next:'Next →', cine_battle:'To battle ▶', cine_tutorial:'To controls ▶', cine_finish:'Finish ▶',
   tut_eyebrow:'how to play', tut_title:'Controls', tut_move:'Run left / right', tut_jump_k:'Space / ↑', tut_jump:'Jump',
   tut_atk_k:'X / click', tut_atk:'Attack with weapon', tut_weap:'Switch weapon: banana-rang / sword', tut_inv:'Inventory & rewards shop', tut_armor:'Armor — 5 sec invincibility for points',
@@ -196,7 +196,7 @@ function applyStaticLang(){ document.documentElement.lang=LANG;
   const lb=document.getElementById('langMenuBtn'); if(lb) lb.textContent=(LANG==='ru'?'🌐 English':'🌐 Русский');
   if(typeof refreshSoundBtn==='function') refreshSoundBtn();
   refreshContinueBtn(); }
-function setLang(l){ LANG=l; try{localStorage.setItem('lang',l);}catch(e){} applyStaticLang(); }
+function setLang(l){ LANG=l; try{localStorage.setItem('lang',l);}catch(e){} if(window.YA)YA.cloudSet({lang:l}); applyStaticLang(); }
 function refreshContinueBtn(){ const b=document.getElementById('continueBtn'); if(!b)return; const s=loadSave&&loadSave();
   if(s&&typeof s.level==='number'&&s.level>0){ const n=Math.min(s.level,META.length-1)+1; b.style.display=''; b.textContent=t('continue_lvl').replace('{n}',n); } }
 (function(){ const b=document.getElementById('langMenuBtn'); if(b) b.onclick=e=>{ e.stopPropagation(); setLang(LANG==='ru'?'en':'ru'); }; })();
@@ -367,13 +367,20 @@ function buildShopGrid(){ const g=document.getElementById('shopGrid'); if(!g)ret
     const nm=document.createElement('div'); nm.className='nm'; nm.textContent=t(pk.name); card.appendChild(nm);
     const ct=document.createElement('div'); ct.className='cost'; ct.textContent=pk.cost+' 🍌'; card.appendChild(ct);
     if(ok) card.onclick=()=>buyPerk(pk.id);
-    g.appendChild(card); }); }
+    g.appendChild(card); });
+  if(window.YA && YA.hasAds){   // ролик за награду (только когда доступна реклама Яндекса)
+    const r=document.createElement('div'); r.className='invCard perkCard';
+    const ic=document.createElement('div'); ic.className='perkIcon'; ic.textContent='🎬'; r.appendChild(ic);
+    const nm=document.createElement('div'); nm.className='nm'; nm.textContent=t('reward_ad'); r.appendChild(nm);
+    const ct=document.createElement('div'); ct.className='cost'; ct.textContent='+400 🍌'; r.appendChild(ct);
+    r.onclick=()=>{ if(!activeScene)return; YA.rewarded(()=>{ score+=400; updateHud(activeScene); checkUpgrade(activeScene); buildShopGrid(); }); };
+    g.appendChild(r); } }
 function buyPerk(id){ const pk=PERKS.find(p=>p.id===id); if(!pk||!activeScene||score<pk.cost)return;
   const s=activeScene; closeInventory();   // закрываем магазин и запускаем эффект в бою
   score-=pk.cost; if(pk.fn(s)===false){ score+=pk.cost; } else { perkBanner(s,pk.icon+' '+t(pk.name)); sfx('perk'); }
   updateHud(s); }
-function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); buildInvGrid(); buildSkinGrid(); buildShopGrid(); show('inventory'); }
-function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); }
+function openInventory(){ if(paused||!activeScene||gameOver)return; paused=true; pauseReason='inv'; activeScene.physics.pause(); if(window.YA)YA.gameplayStop(); buildInvGrid(); buildSkinGrid(); buildShopGrid(); show('inventory'); }
+function closeInventory(){ if(pauseReason!=='inv')return; hide('inventory'); paused=false; pauseReason=null; if(activeScene)activeScene.physics.resume(); if(window.YA)YA.gameplayStart(); }
 document.getElementById('invClose').onclick=closeInventory;
 document.addEventListener('keydown',e=>{ if(e.code==='KeyI'){ if(pauseReason==='inv')closeInventory(); else openInventory(); } });
 
@@ -559,9 +566,9 @@ const BOSSCUT={
 
 /* ---- сохранение прогресса ---- */
 const SAVE_KEY='banane_save_v1';
-function saveProgress(level){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify({level,score,hero:selectedHero,weapon:currentWeapon,upgraded})); }catch(e){} }
+function saveProgress(level){ const d={level,score,hero:selectedHero,weapon:currentWeapon,upgraded}; try{ localStorage.setItem(SAVE_KEY,JSON.stringify(d)); }catch(e){} if(window.YA)YA.cloudSet({save:d,maxlvl:maxLevel,lang:LANG}); }
 function loadSave(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; } }
-function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} if(window.YA)YA.cloudSet({save:null}); }
 function applyUpgradeState(){ const lv=upgraded?2:1, dm=upgraded?3:2;
   WEAPONS.boomerang.dmg=dm; WEAPONS.club.dmg=dm; WEAPONS.boomerang.level=lv; WEAPONS.club.level=lv; }
 function continueGame(){ const s=loadSave(); if(!s)return; hide('title');
@@ -576,14 +583,16 @@ function startLevelFlow(){   // сюжетный ролик блока (если
   else playBanter(currentLevel, startInstance); }
 
 let endAction='restart';
-function endScreenG(title,s,btnKey,action){ document.getElementById('endTitle').textContent=title;
+function endScreenG(title,s,btnKey,action){ if(window.YA)YA.gameplayStop(); document.getElementById('endTitle').textContent=title;
   document.getElementById('endScore').textContent=t('end_score')+s; document.getElementById('endBtn').textContent=t(btnKey); endAction=action; show('endScreen'); }
 window.levelClear=n=>{ sfx('win'); saveProgress(n); endScreenG(t('lvl_cleared').replace('{n}',n),score,'end_next','next'); };  // n = индекс следующего уровня (автосейв)
 window.showWin=()=>{ sfx('win'); clearSave(); playCinematic(VICTORY, ()=>endScreenG(t('valley_saved'),score,'end_playagain','restart')); };
 window.showGameOver=()=>endScreenG(t('game_over'),score,'end_retry','restart');   // сейв сохраняем — «Продолжить» вернёт на последний уровень
 document.getElementById('endBtn').onclick=()=>{ hide('endScreen');
   if(activeScene&&activeScene.scene) activeScene.scene.pause();   // заморозить старый уровень: его update() не должен крутиться во время кат-сцены/перехода
-  if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
+  const go=()=>{ if(endAction==='next'){ currentLevel++; gameOver=false; startLevelFlow(); } else startGame(chosenWeapon); };
+  if(window.YA) YA.fullscreen(go); else go();   // межуровневая реклама (Яндекс сам ограничивает частоту)
+};
 
 function rng(seed){let a=seed>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 /* ---- биомы: своя графика/враги/босс на группу уровней ----
@@ -856,6 +865,7 @@ function create(){
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
   playMusic(cfg.biome);   // музыка биома (один трек на блок, кроссфейд на границе)
+  if(window.YA)YA.gameplayStart();   // Яндекс: началась игровая сессия уровня
 }
 
 // текстура врага по цепочке биомов: свой биом → ref-биом → базовая (если своего арта нет)
@@ -1067,3 +1077,20 @@ function toggleFS(){ if(fsActive()){ const ex=document.exitFullscreen||document.
   if(document.body.classList.contains('touch')){
     const once=()=>{ enterFS(); window.removeEventListener('pointerdown',once); };
     window.addEventListener('pointerdown',once); } })();
+
+/* ===================== Мост Yandex Games SDK ===================== */
+window.setLang=setLang;
+// пауза/возобновление музыки на время рекламы
+window.onAdStart=()=>{ try{ for(const k in musTracks)musTracks[k].pause(); }catch(e){} };
+window.onAdEnd=()=>{ try{ if(!musMuted&&musInteracted&&musCurEl){ const p=musCurEl.play(); if(p&&p.catch)p.catch(()=>{}); } }catch(e){} };
+// прилетели облачные сохранения Яндекса — слить в localStorage и обновить меню
+window.YA_onCloud=(d)=>{
+  if(d){ try{
+    if(typeof d.maxlvl==='number'&&d.maxlvl>maxLevel){ maxLevel=d.maxlvl; localStorage.setItem('banane_maxlvl',String(maxLevel)); }
+    if(d.save){ const ls=loadSave(); if(!ls||((d.save.level||0)>=(ls.level||0))) localStorage.setItem(SAVE_KEY,JSON.stringify(d.save)); }
+  }catch(e){} }
+  // язык: если игрок не выбирал явно — берём из облака или локали Яндекса
+  if(!localStorage.getItem('lang')){ const pl=(d&&d.lang)||(YA.lang==='ru'?'ru':(YA.lang?'en':null)); if(pl&&pl!==LANG) setLang(pl); }
+  refreshContinueBtn();
+};
+if(window.YA) YA.init();
