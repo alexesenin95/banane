@@ -145,7 +145,7 @@ const I18N={ ru:{
   tut_atk_k:'X / клик', tut_atk:'Атака оружием', tut_weap:'Сменить оружие: банан-бумеранг / меч', tut_inv:'Инвентарь и магазин наград', tut_armor:'Броня — неуязвимость 5 сек за очки',
   tut_tip:'🍌 Собирай бананы и бей орков — за это начисляются очки. Трать их в инвентаре (клавиша I, на телефоне — ☰) на усиления-награды.',
   tut_warn:'🦘 Обязательно купи в наградах СУПЕР-ПРЫЖОК! Некоторые высокие стены и широкие пропасти можно преодолеть только с ним.',
-  tut_mob:'📱 На телефоне управление — кнопками прямо на экране.', tut_start:'В БОЙ! ▶',
+  tut_mob:'📱 На телефоне: проведи пальцем по левой части экрана — герой идёт за пальцем; кнопки справа — прыжок и удар.', tut_start:'В БОЙ! ▶',
   ban_eyebrow:'перед боем · друзья рядом', ban_skip:'пропустить →', ban_next:'Дальше →', ban_last:'В путь →',
   loading:'Загрузка…', rotate:'Поверни телефон<br>в альбомную ориентацию',
   sound_on:'Звук: вкл', sound_off:'Звук: выкл', continue:'Продолжить', continue_lvl:'Продолжить (ур. {n})',
@@ -173,7 +173,7 @@ const I18N={ ru:{
   tut_atk_k:'X / click', tut_atk:'Attack with weapon', tut_weap:'Switch weapon: banana-rang / sword', tut_inv:'Inventory & rewards shop', tut_armor:'Armor — 5 sec invincibility for points',
   tut_tip:'🍌 Collect bananas and smash orcs to earn points. Spend them in the inventory (key I, ☰ on mobile) on reward boosts.',
   tut_warn:'🦘 Be sure to buy the SUPER JUMP reward! Some tall walls and wide chasms can be crossed ONLY with it.',
-  tut_mob:'📱 On mobile, control with the on-screen buttons.', tut_start:'TO BATTLE! ▶',
+  tut_mob:'📱 On mobile: drag your finger on the left side of the screen to walk; the right buttons jump and attack.', tut_start:'TO BATTLE! ▶',
   ban_eyebrow:'before battle · friends at your side', ban_skip:'skip →', ban_next:'Next →', ban_last:'Onward →',
   loading:'Loading…', rotate:'Rotate your phone<br>to landscape',
   sound_on:'Sound: on', sound_off:'Sound: off', continue:'Continue', continue_lvl:'Continue (lvl {n})',
@@ -1048,7 +1048,21 @@ function setupTouch(){
     const off=e=>{ e.preventDefault(); TOUCH[prop]=false; };
     el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off);
     el.addEventListener('pointercancel',off); el.addEventListener('pointerleave',off); };
-  hold('btnLeft','left'); hold('btnRight','right'); hold('btnJump','jump');
+  hold('btnJump','jump');
+  // плавающий джойстик: нажми в левой зоне и тяни — герой идёт туда (как сенсорный стик)
+  const jz=document.getElementById('joyZone'), jb=document.getElementById('joyBase'), jk=document.getElementById('joyKnob');
+  let joyId=null, jcx=0, jcy=0; const JR=46, JDZ=9;
+  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; };
+  if(jz){
+    jz.addEventListener('pointerdown',e=>{ if(joyId!==null)return; e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
+      jb.style.left=jcx+'px'; jb.style.top=jcy+'px'; jb.style.display='block'; jk.style.transform='translate(-50%,-50%)';
+      try{jz.setPointerCapture(e.pointerId);}catch(_){} });
+    jz.addEventListener('pointermove',e=>{ if(e.pointerId!==joyId)return; e.preventDefault();
+      let dx=e.clientX-jcx, dy=e.clientY-jcy; const d=Math.hypot(dx,dy); if(d>JR){ dx=dx/d*JR; dy=dy/d*JR; }
+      jk.style.transform='translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
+      TOUCH.left=dx<-JDZ; TOUCH.right=dx>JDZ; });
+    const jend=e=>{ if(e.pointerId!==joyId)return; joyReset(); };
+    jz.addEventListener('pointerup',jend); jz.addEventListener('pointercancel',jend); }
   const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
     el.addEventListener('pointerdown',e=>{ e.preventDefault(); fn(); }); };
   tap('btnAtk',()=>{ if(activeScene) doAttack(activeScene); });
@@ -1056,7 +1070,7 @@ function setupTouch(){
   tap('btnArmor',()=>{ if(activeScene) activateArmor(activeScene); });
   tap('btnInv',()=>{ if(pauseReason==='inv') closeInventory(); else openInventory(); });
   // сброс зажатий при сворачивании/потере фокуса — чтобы кнопки не «залипали»
-  const clear=()=>{ TOUCH.left=TOUCH.right=TOUCH.jump=false; };
+  const clear=()=>{ TOUCH.jump=false; joyReset(); };
   window.addEventListener('blur',clear);
   document.addEventListener('visibilitychange',()=>{ if(document.hidden)clear(); });
 }
