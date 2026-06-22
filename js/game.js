@@ -125,7 +125,7 @@ let score=0, lives=3, heroHP=HERO_MAXHP, gameOver=false, paused=false, pauseReas
 // временные эффекты из магазина наград (сбрасываются в начале уровня)
 let scoreMul=1, dmgMul=1, heroSpeedMul=1, heroJumpMul=1, magnetUntil=0;
 function resetPerks(s){ scoreMul=1; dmgMul=1; heroSpeedMul=1; heroJumpMul=1; magnetUntil=0; if(s)s.freezeUntil=0; }
-const TOUCH={left:false,right:false,jump:false};   // состояние сенсорных кнопок (читается в update)
+const TOUCH={left:false,right:false,jump:false,moveX:0};   // moveX: аналоговое движение джойстика -1..1
 const show=id=>document.getElementById(id).classList.add('show');
 const hide=id=>document.getElementById(id).classList.remove('show');
 
@@ -925,16 +925,18 @@ function update(){
       delete playedCine[currentLevel]; delete playedBanter[currentLevel];   // показать ролик/болтовню заново при тесте
       this.scene.pause(); startLevelFlow(); return; } }
   for(const cut of this.cuts){ if(!cut.done && p.x>=cut.x){ cut.done=true; startCut(this,cut); return; } }
-  const left=c.left.isDown||TOUCH.left, right=c.right.isDown||TOUCH.right;
-  const spd=210*heroSpeedMul;
-  if(left){p.setVelocityX(-spd);p.setFlipX(true);} else if(right){p.setVelocityX(spd);p.setFlipX(false);} else p.setVelocityX(0);
+  let mx=0;   // клавиатура — полный ход; джойстик — аналог (-1..1)
+  if(c.left.isDown)mx=-1; else if(c.right.isDown)mx=1; else mx=TOUCH.moveX||0;
+  const moving=Math.abs(mx)>0.05;
+  if(mx<-0.01)p.setFlipX(true); else if(mx>0.01)p.setFlipX(false);
+  p.setVelocityX(210*heroSpeedMul*mx);
   const onGround=p.body.blocked.down||p.body.touching.down;
   if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround){ p.setVelocityY(this.jumpVel*heroJumpMul); sfx('jump'); }
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
   if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.buyKey)) activateArmor(this);
-  if(p._st!=='attack'){ if(!onGround)setSt(p,'jump'); else if(left||right)setSt(p,'run'); else setSt(p,'idle'); }
+  if(p._st!=='attack'){ if(!onGround)setSt(p,'jump'); else if(moving)setSt(p,'run'); else setSt(p,'idle'); }
 
   const sx=this.cameras.main.scrollX;
   this.bgFar.tilePositionX=sx*0.1; this.bgMid.tilePositionX=sx*0.35; this.bgFront.tilePositionX=sx*0.6;
@@ -1052,7 +1054,7 @@ function setupTouch(){
   // плавающий джойстик: нажми в левой зоне и тяни — герой идёт туда (как сенсорный стик)
   const jz=document.getElementById('joyZone'), jb=document.getElementById('joyBase'), jk=document.getElementById('joyKnob');
   let joyId=null, jcx=0, jcy=0; const JR=46, JDZ=9;
-  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; };
+  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; TOUCH.moveX=0; };
   if(jz){
     jz.addEventListener('pointerdown',e=>{ if(joyId!==null)return; e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
       jb.style.left=jcx+'px'; jb.style.top=jcy+'px'; jb.style.display='block'; jk.style.transform='translate(-50%,-50%)';
@@ -1060,7 +1062,8 @@ function setupTouch(){
     jz.addEventListener('pointermove',e=>{ if(e.pointerId!==joyId)return; e.preventDefault();
       let dx=e.clientX-jcx, dy=e.clientY-jcy; const d=Math.hypot(dx,dy); if(d>JR){ dx=dx/d*JR; dy=dy/d*JR; }
       jk.style.transform='translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
-      TOUCH.left=dx<-JDZ; TOUCH.right=dx>JDZ; });
+      let m=(Math.abs(dx)-JDZ)/(JR-JDZ); m=Math.max(0,Math.min(1,m));   // 0 в мёртвой зоне → 1 на максимуме
+      TOUCH.moveX = m>0 ? (dx<0?-1:1)*(0.4+0.6*m) : 0; });               // мин. скорость 0.4 (ходьба) → 1.0 (бег)
     const jend=e=>{ if(e.pointerId!==joyId)return; joyReset(); };
     jz.addEventListener('pointerup',jend); jz.addEventListener('pointercancel',jend); }
   const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
