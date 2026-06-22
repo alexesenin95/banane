@@ -340,9 +340,9 @@ function selectSkin(id){ if(!skinUnlocked(id))return; selectedHero=id; applyHero
 function _timed(s,fn,ms){ s.time.delayedCall(ms,fn); }
 function grantInvuln(s,ms){ const p=s.player; if(!p)return; sfx('armor'); p.invuln=true; p.armor=true; p.setTint(0xffe27a);
   _timed(s,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } },ms); }
-function perkBanner(s,txt){ const tt=s.add.text(400,108,txt,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'18px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+function perkBanner(s,txt){ const tt=s.add.text(s.scale.width/2,108,txt,{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'18px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
   s.tweens.add({targets:tt,y:88,alpha:0,duration:1100,onComplete:()=>tt.destroy()}); }
-function bananaStorm(s){ const x0=s.cameras.main.scrollX-60, x1=s.cameras.main.scrollX+860;
+function bananaStorm(s){ const x0=s.cameras.main.scrollX-60, x1=s.cameras.main.scrollX+s.cameras.main.width+60;
   s.enemies.children.iterate(e=>{ if(e&&e.active&&e.x>x0&&e.x<x1) damageEnemy(e,e.isBoss?8:99); });
   s.cameras.main.flash(240,255,232,120); return true; }
 function freezeEnemies(s,ms){ s.freezeUntil=s.time.now+ms;
@@ -689,8 +689,11 @@ function genLevel(idx){
   return {worldW:W,gaps,platforms,enemies,bananas,lifeUps,barriers,cps,cuts,flagX,boss:m.boss,biome:m.biome};
 }
 
-function makeConfig(){return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
-  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:800,height:450},
+function makeConfig(){ const st=document.getElementById('stage');
+  const aw=(st&&st.clientWidth)||window.innerWidth||800, ah=(st&&st.clientHeight)||window.innerHeight||450;
+  let GW=Math.round(450*(aw/ah)); if(!isFinite(GW)||GW<800)GW=800; if(GW>1280)GW=1280;   // ширина под соотношение экрана (высота 450) — заполняет экран без полей
+  return{type:Phaser.AUTO,parent:'game',backgroundColor:'#2a4a30',
+  scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH,width:GW,height:450},
   physics:{default:'arcade',arcade:{gravity:{y:1250},debug:false}},scene:{preload,create,update}};}
 function startInstance(){ paused=false; pauseReason=null;
   // Один инстанс на всю сессию: рестарт сцены сохраняет кэш текстур (без перекачки ассетов на каждом уровне).
@@ -723,16 +726,16 @@ function setSt(p,s){ if(p._st===s)return; p._st=s; const h=HK();
   if(s==='run')p.anims.play(heroAnimKey(),true); else {p.anims.stop(); p.setTexture(s==='jump'?h.jump:h.idle);}
   fitHero(p); }
 function updateWeaponHUD(scene){ if(!scene.whl)return;
-  scene.whl.x=currentWeapon==='boomerang'?728:762;
+  scene.whl.x=currentWeapon==='boomerang'?scene.scale.width-72:scene.scale.width-38;
   scene.wIcons.boomerang.setAlpha(currentWeapon==='boomerang'?1:0.45);
   scene.wIcons.club.setAlpha(currentWeapon==='club'?1:0.45); }
 function checkUpgrade(scene){ if(!upgraded && score>=400){ upgraded=true; WEAPONS.boomerang.dmg=3; WEAPONS.club.dmg=3; WEAPONS.boomerang.level=2; WEAPONS.club.level=2; sfx('perk');
     // иконки оружия не меняем (банан/меч), апгрейд только усиливает урон
-    const tt=scene.add.text(400,92,t('weapon_upg'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+    const tt=scene.add.text(scene.scale.width/2,92,t('weapon_upg'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'22px',color:'#ffd93d',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
     scene.tweens.add({targets:tt,alpha:0,y:72,delay:1000,duration:700,onComplete:()=>tt.destroy()}); } }
 function activateArmor(scene){ if(score<500||scene.player.armor)return; score-=500; sfx('armor'); updateHud(scene);
   const p=scene.player; p.armor=true; p.invuln=true; p.setTint(0xffe27a);
-  const tt=scene.add.text(400,68,t('armor_on'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
+  const tt=scene.add.text(scene.scale.width/2,68,t('armor_on'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'20px',color:'#ffe27a',stroke:'#3a2a08',strokeThickness:5}).setScrollFactor(0).setOrigin(0.5).setDepth(22);
   scene.tweens.add({targets:tt,alpha:0,delay:1500,duration:600,onComplete:()=>tt.destroy()});
   scene.time.delayedCall(5000,()=>{ if(p.active){ p.armor=false; p.invuln=false; p.clearTint(); } }); }
 
@@ -751,10 +754,11 @@ function create(){
   const bc=BIOMES[cfg.biome], bvz=vis(cfg.biome), dim=bc.tint;
   this.biomeCfg={tile:bvz.tile,obst:bvz.obst,boss:bc.boss,bossName:bc.bossName};
   this.bchain=[cfg.biome, bc.ref].filter(Boolean);   // выбор арта врага: свой биом → ref-биом → базовый (джунгли)
-  this.bgFar=this.add.tileSprite(400,225,800,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
-  this.bgMid=this.add.tileSprite(400,225,800,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
-  this.bgFront=this.add.tileSprite(400,225,800,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
-  this.add.rectangle(400,225,800,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
+  const GW=this.scale.width;   // ширина канваса (адаптивная) — фон и центрированный HUD от неё
+  this.bgFar=this.add.tileSprite(GW/2,225,GW,450,bvz.far).setScrollFactor(0).setDepth(-5).setTint(dim);
+  this.bgMid=this.add.tileSprite(GW/2,225,GW,450,bvz.mid).setScrollFactor(0).setDepth(-4).setTint(dim);
+  this.bgFront=this.add.tileSprite(GW/2,225,GW,450,bvz.front).setScrollFactor(0).setDepth(-3).setTint(dim);
+  this.add.rectangle(GW/2,225,GW,450,bc.sky,0.16).setScrollFactor(0).setDepth(-2);
   if(!this.anims.exists(heroAnimKey())){
     this.anims.create({key:heroAnimKey(),frames:HK().run.map(k=>({key:k})),frameRate:9,repeat:-1}); }
   if(!this.anims.exists('swim')){
@@ -852,15 +856,17 @@ function create(){
   updateHud(this);
   this.add.text(16,424,(ADMIN?t('hud_admin'):'')+t('hud_hint'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'12px',color:'rgba(255,255,255,.7)',stroke:'#000',strokeThickness:2}).setScrollFactor(0).setDepth(20);
   this.add.rectangle(745,24,74,36,0x10241a,0.55).setScrollFactor(0).setDepth(18).setStrokeStyle(1,0x3f9d4a);
-  this.whl=this.add.rectangle(728,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
-  this.wIcons={boomerang:this.add.image(728,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
-               club:this.add.image(762,24,'wi_sword').setScrollFactor(0).setDepth(20).setDisplaySize(24,24)};
+  const wx=this.scale.width-72;   // правый край (на ПК = 728); на мобиле канвас шире — иконки не нужны (есть кнопка ⇄)
+  this.whl=this.add.rectangle(wx,24,32,32,0x000000,0).setScrollFactor(0).setDepth(19).setStrokeStyle(3,0xffc93c);
+  this.wIcons={boomerang:this.add.image(wx,24,'banana').setScrollFactor(0).setDepth(20).setDisplaySize(24,24),
+               club:this.add.image(wx+34,24,'wi_sword').setScrollFactor(0).setDepth(20).setDisplaySize(24,24)};
+  if(document.body.classList.contains('touch')){ this.whl.setVisible(false); this.wIcons.boomerang.setVisible(false); this.wIcons.club.setVisible(false); }
   updateWeaponHUD(this);
 
-  if(cfg.boss){ this.add.rectangle(400,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
-    this.bossBar=this.add.rectangle(250,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
-    this.add.text(400,46,t(this.biomeCfg.bossName),{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
-  const banner=this.add.text(400,150,cfg.boss?(t('level_word')+' '+(currentLevel+1)+'\n'+t(this.biomeCfg.bossName)):(t('level_word')+' '+(currentLevel+1)),
+  if(cfg.boss){ this.add.rectangle(GW/2,30,304,16,0x000000,0.5).setScrollFactor(0).setDepth(20);
+    this.bossBar=this.add.rectangle(GW/2-150,30,300,12,0xff4444).setScrollFactor(0).setDepth(21).setOrigin(0,0.5);
+    this.add.text(GW/2,46,t(this.biomeCfg.bossName),{fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'13px',color:'#fff',stroke:'#000',strokeThickness:3}).setScrollFactor(0).setOrigin(0.5).setDepth(21); }
+  const banner=this.add.text(GW/2,150,cfg.boss?(t('level_word')+' '+(currentLevel+1)+'\n'+t(this.biomeCfg.bossName)):(t('level_word')+' '+(currentLevel+1)),
     {fontFamily:'"Russo One","Trebuchet MS",sans-serif',fontSize:'32px',color:'#fff',align:'center',stroke:'#1c3a12',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(15);
   this.tweens.add({targets:banner,alpha:0,delay:1300,duration:600,onComplete:()=>banner.destroy()});
   hideLoad();   // уровень построен — убрать экран загрузки
@@ -931,7 +937,7 @@ function update(){
   if(mx<-0.01)p.setFlipX(true); else if(mx>0.01)p.setFlipX(false);
   p.setVelocityX(210*heroSpeedMul*mx);
   const onGround=p.body.blocked.down||p.body.touching.down;
-  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround){ p.setVelocityY(this.jumpVel*heroJumpMul); sfx('jump'); }
+  if((c.up.isDown||this.spaceKey.isDown||TOUCH.jump)&&onGround){ p.setVelocityY(this.jumpVel*heroJumpMul); sfx('jump'); TOUCH.jump=false; }
   if(this.atkKeys.some(k=>Phaser.Input.Keyboard.JustDown(k))) doAttack(this);
   if(Phaser.Input.Keyboard.JustDown(this.k1)){currentWeapon='boomerang';updateWeaponHUD(this);applyHeroLook(this);}
   if(Phaser.Input.Keyboard.JustDown(this.k2)){currentWeapon='club';updateWeaponHUD(this);applyHeroLook(this);}
@@ -983,7 +989,7 @@ function update(){
 
   this.projs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>1100) pr.destroy(); });
   this.eprojs.children.iterate(pr=>{ if(pr&&pr.active&&now-pr.born>2600) pr.destroy(); });
-  if(this.rocks){ const camx=this.cameras.main.scrollX; this.rocks.children.iterate(r=>{ if(r&&r.active&&(now-r.born>5200||r.x<camx-120||r.x>camx+920||r.y>620)) r.destroy(); }); }
+  if(this.rocks){ const camx=this.cameras.main.scrollX, camR=camx+this.cameras.main.width+120; this.rocks.children.iterate(r=>{ if(r&&r.active&&(now-r.born>5200||r.x<camx-120||r.x>camR||r.y>620)) r.destroy(); }); }
   if(this.bossBar&&this.bossBar.active) this.bossBar.setSize(this.boss?Math.max(0,300*(this.boss.hp/this.boss.maxhp)):0,12);
 }
 
@@ -1028,7 +1034,7 @@ function hurtPlayer(scene,fromX,dmg){ const p=scene.player; if(gameOver||p.invul
   p.invuln=true; p.setAlpha(0.55); scene.time.delayedCall(700,()=>{ if(p.active&&!p.armor){p.invuln=false;p.setAlpha(1);} }); }
 function loseLife(scene){ lives-=1; heroHP=HERO_MAXHP; sfx('die');
   if(lives<=0){ gameOver=true; scene.physics.pause(); scene.cameras.main.flash(400,160,0,0);
-    scene.add.text(400,200,t('level_restart'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
+    scene.add.text(scene.scale.width/2,200,t('level_restart'),{fontFamily:'Fredoka, "Trebuchet MS", sans-serif',fontSize:'30px',color:'#fff',stroke:'#3a0a0a',strokeThickness:6}).setScrollFactor(0).setOrigin(0.5).setDepth(30);
     scene.time.delayedCall(1200,()=>{ lives=START_LIVES; heroHP=HERO_MAXHP; gameOver=false; scene.scene.restart(); }); return; }
   const p=scene.player; p.setVelocity(0,0); p.setPosition(scene.cpX,180); p.clearTint();   // респаун на чекпоинте, полный HP
   scene.cameras.main.flash(160,255,80,80); updateHud(scene);
@@ -1050,11 +1056,10 @@ function setupTouch(){
     const off=e=>{ e.preventDefault(); TOUCH[prop]=false; };
     el.addEventListener('pointerdown',on); el.addEventListener('pointerup',off);
     el.addEventListener('pointercancel',off); el.addEventListener('pointerleave',off); };
-  hold('btnJump','jump');
-  // плавающий джойстик: нажми в левой зоне и тяни — герой идёт туда (как сенсорный стик)
+  // плавающий джойстик: нажми в левой зоне и тяни — герой идёт туда; толкни вверх — прыжок
   const jz=document.getElementById('joyZone'), jb=document.getElementById('joyBase'), jk=document.getElementById('joyKnob');
-  let joyId=null, jcx=0, jcy=0; const JR=46, JDZ=9;
-  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; TOUCH.moveX=0; };
+  let joyId=null, jcx=0, jcy=0, joyJumpLatch=false; const JR=46, JDZ=9, JUP=26;
+  const joyReset=()=>{ joyId=null; if(jb)jb.style.display='none'; TOUCH.left=TOUCH.right=false; TOUCH.moveX=0; TOUCH.jump=false; joyJumpLatch=false; };
   if(jz){
     jz.addEventListener('pointerdown',e=>{ if(joyId!==null)return; e.preventDefault(); joyId=e.pointerId; jcx=e.clientX; jcy=e.clientY;
       jb.style.left=jcx+'px'; jb.style.top=jcy+'px'; jb.style.display='block'; jk.style.transform='translate(-50%,-50%)';
@@ -1063,7 +1068,9 @@ function setupTouch(){
       let dx=e.clientX-jcx, dy=e.clientY-jcy; const d=Math.hypot(dx,dy); if(d>JR){ dx=dx/d*JR; dy=dy/d*JR; }
       jk.style.transform='translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
       let m=(Math.abs(dx)-JDZ)/(JR-JDZ); m=Math.max(0,Math.min(1,m));   // 0 в мёртвой зоне → 1 на максимуме
-      TOUCH.moveX = m>0 ? (dx<0?-1:1)*(0.4+0.6*m) : 0; });               // мин. скорость 0.4 (ходьба) → 1.0 (бег)
+      TOUCH.moveX = m>0 ? (dx<0?-1:1)*(0.4+0.6*m) : 0;                  // мин. скорость 0.4 (ходьба) → 1.0 (бег)
+      const up=dy<-JUP;                                                 // толчок вверх — прыжок (фронт = один прыжок, повтор после возврата)
+      if(up&&!joyJumpLatch){ TOUCH.jump=true; joyJumpLatch=true; } else if(!up){ joyJumpLatch=false; } });
     const jend=e=>{ if(e.pointerId!==joyId)return; joyReset(); };
     jz.addEventListener('pointerup',jend); jz.addEventListener('pointercancel',jend); }
   const tap=(id,fn)=>{ const el=document.getElementById(id); if(!el)return;
