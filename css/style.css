@@ -121,7 +121,9 @@
     background:rgba(20,42,26,.40);color:#fff;font-size:25px;font-weight:800;line-height:1;font-family:inherit;
     display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);transition:transform .05s,background .05s}
   #touch .tbtn:active{background:rgba(255,201,60,.6);transform:scale(.9)}
-  #touch .tbig{width:76px;height:76px;font-size:30px}
+  #touch .tbig{width:74px;height:74px;font-size:29px}
+  #touch .tjump{width:90px;height:90px;font-size:34px;background:rgba(36,80,40,.46);border-color:rgba(150,255,150,.5)}
+  #touch .tjump:active{background:rgba(150,255,150,.6)}
   #touch .tsm{width:46px;height:46px;font-size:19px;border-width:1px;background:rgba(20,42,26,.32)}
   body.touch #touch{display:block}
 
